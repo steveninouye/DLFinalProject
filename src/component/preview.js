@@ -1,8 +1,16 @@
 import React, { Component } from 'react';
 
+import SearchHeader from './Search/search-header';
+import DetailPreview from './Preview/detail-preview';
+
 class Preview extends Component {
   render() {
-    return <div>Preview is here!</div>;
+    return (
+      <div>
+        <SearchHeader />
+        <DetailPreview />
+      </div>
+    );
   }
 }
 

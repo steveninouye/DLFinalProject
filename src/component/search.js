@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 
-import SearchHeader from './SearchList/search-header';
-import RefineSearch from './SearchList/refine-search';
-import SearchList from './SearchList/search-list';
+import SearchHeader from './Search/search-header';
+import RefineSearch from './Search/refine-search';
+import SearchList from './Search/search-list';
 
 class Search extends Component {
   render() {
