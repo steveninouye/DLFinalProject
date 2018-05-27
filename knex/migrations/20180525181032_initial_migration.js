@@ -108,7 +108,7 @@ exports.up = function(knex, Promise) {
       table.bigInteger('date_favorited').defaultTo(Date.now());
     })
     .createTable('user_code_rating', table => {
-      table.bigIncrements('code_rating_id');
+      table.bigIncrements('user_code_rating_id');
       table
         .bigInteger('rated_by')
         .references('user_id')
@@ -123,7 +123,7 @@ exports.up = function(knex, Promise) {
       table.bigInteger('date_rated').defaultTo(Date.now());
     })
     .createTable('user_doc_rating', table => {
-      table.bigIncrements('doc_rating_id');
+      table.bigIncrements('user_doc_rating_id');
       table
         .bigInteger('rated_by')
         .references('user_id')
