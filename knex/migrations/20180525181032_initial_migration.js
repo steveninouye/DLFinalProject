@@ -12,20 +12,6 @@ exports.up = function(knex, Promise) {
       table.bigInteger('created_at').defaultTo(Date.now());
       table.bigInteger('updated_at').defaultTo(Date.now());
     })
-    .createTable('code_files', table => {
-      table.bigIncrements('file_id');
-      table.string('file_name').notNullable();
-      table.string('file_author').notNullable();
-      table
-        .integer('kissit_file_author')
-        .references('user_id')
-        .inTable('users');
-      table.text('file_contents');
-      table.text('file_path');
-      table.string('file_url');
-      table.bigInteger('created_at').defaultTo(Date.now());
-      table.bigInteger('updated_at').defaultTo(Date.now());
-    })
     .createTable('documents', table => {
       table.bigIncrements('doc_id');
       table.string('doc_title').notNullable();
@@ -33,24 +19,12 @@ exports.up = function(knex, Promise) {
       table
         .integer('kissit_doc_author')
         .references('user_id')
-        .inTable('users');
+        .inTable('users')
+        .onDelete('cascade');
       table.text('doc_contents');
       table.string('doc_url');
       table.bigInteger('created_at').defaultTo(Date.now());
       table.bigInteger('updated_at').defaultTo(Date.now());
-    })
-    .createTable('user_code', table => {
-      table.bigIncrements('user_code_id');
-      table
-        .bigInteger('user_id')
-        .references('user_id')
-        .inTable('users')
-        .notNullable();
-      table
-        .bigInteger('file_id')
-        .references('file_id')
-        .inTable('code_files')
-        .notNullable();
     })
     .createTable('user_doc', table => {
       table.bigIncrements('user_doc_id');
@@ -58,26 +32,14 @@ exports.up = function(knex, Promise) {
         .bigInteger('user_id')
         .references('user_id')
         .inTable('users')
+        .onDelete('cascade')
         .notNullable();
       table
         .bigInteger('doc_id')
         .references('doc_id')
         .inTable('documents')
+        .onDelete('cascade')
         .notNullable();
-    })
-    .createTable('user_fav_code', table => {
-      table.bigIncrements('user_fav_code_id');
-      table
-        .bigInteger('user_id')
-        .references('user_id')
-        .inTable('users')
-        .notNullable();
-      table
-        .bigInteger('file_id')
-        .references('file_id')
-        .inTable('code_files')
-        .notNullable();
-      table.bigInteger('date_favorited').defaultTo(Date.now());
     })
     .createTable('user_fav_doc', table => {
       table.bigIncrements('user_fav_doc_id');
@@ -85,11 +47,13 @@ exports.up = function(knex, Promise) {
         .bigInteger('user_id')
         .references('user_id')
         .inTable('users')
+        .onDelete('cascade')
         .notNullable();
       table
         .bigInteger('doc_id')
         .references('doc_id')
         .inTable('documents')
+        .onDelete('cascade')
         .notNullable();
       table.bigInteger('date_favorited').defaultTo(Date.now());
     })
@@ -99,28 +63,15 @@ exports.up = function(knex, Promise) {
         .bigInteger('user_id')
         .references('user_id')
         .inTable('users')
+        .onDelete('cascade')
         .notNullable();
       table
         .bigInteger('fav_user')
         .references('user_id')
         .inTable('users')
+        .onDelete('cascade')
         .notNullable();
       table.bigInteger('date_favorited').defaultTo(Date.now());
-    })
-    .createTable('user_code_rating', table => {
-      table.bigIncrements('user_code_rating_id');
-      table
-        .bigInteger('rated_by')
-        .references('user_id')
-        .inTable('users')
-        .notNullable();
-      table
-        .bigInteger('file_id')
-        .references('file_id')
-        .inTable('code_files')
-        .notNullable();
-      table.integer('file_rating').notNullable();
-      table.bigInteger('date_rated').defaultTo(Date.now());
     })
     .createTable('user_doc_rating', table => {
       table.bigIncrements('user_doc_rating_id');
@@ -128,27 +79,116 @@ exports.up = function(knex, Promise) {
         .bigInteger('rated_by')
         .references('user_id')
         .inTable('users')
+        .onDelete('cascade')
         .notNullable();
       table
         .bigInteger('doc_id')
         .references('doc_id')
         .inTable('documents')
+        .onDelete('cascade')
         .notNullable();
       table.integer('doc_rating').notNullable();
       table.bigInteger('date_rated').defaultTo(Date.now());
+    })
+    .createTable('user_github', table => {
+      table.bigIncrements('user_github_id');
+      table.string('user_github_url');
+      table.bigInteger('last_github_update').defaultTo(Date.now());
+      table
+        .bigInteger('user_id')
+        .references('user_id')
+        .inTable('users')
+        .onDelete('cascade');
+    })
+    .createTable('following_on_github', table => {
+      table.bigIncrements('following_on_github_id');
+      table
+        .bigInteger('user_github_id')
+        .references('user_github_id')
+        .inTable('user_github')
+        .onDelete('cascade');
+      table.string('favorites');
+    })
+    .createTable('rdf_tree', table => {
+      table.bigIncrements('rdf_tree_id');
+      table
+        .bigInteger('user_github_id')
+        .references('user_github_id')
+        .inTable('user_github')
+        .onDelete('cascade');
+      table.bigInteger('last_update').defaultTo(Date.now());
+      table.string('red_url').notNullable();
+      table.integer('level').notNullable();
+      table.bigInteger('parent_id');
+    })
+    .createTable('code_files', table => {
+      table.bigIncrements('file_id');
+      table.string('file_name').notNullable();
+      table.string('file_author').notNullable();
+      table
+        .integer('kissit_file_author')
+        .references('user_id')
+        .inTable('users')
+        .onDelete('cascade');
+      table.text('file_html_table');
+      table.text('file_code');
+      table.text('file_path');
+      table.string('file_url');
+      table.bigInteger('created_at').defaultTo(Date.now());
+      table.bigInteger('updated_at').defaultTo(Date.now());
+      table
+        .bigInteger('rdf_tree_id')
+        .references('rdf_tree_id')
+        .inTable('rdf_tree')
+        .onDelete('cascade');
+    })
+    .createTable('user_code_rating', table => {
+      table.bigIncrements('user_code_rating_id');
+      table
+        .bigInteger('rated_by')
+        .references('user_id')
+        .inTable('users')
+        .onDelete('cascade')
+        .notNullable();
+      table
+        .bigInteger('file_id')
+        .references('file_id')
+        .inTable('code_files')
+        .onDelete('cascade')
+        .notNullable();
+      table.integer('file_rating').notNullable();
+      table.bigInteger('date_rated').defaultTo(Date.now());
+    })
+    .createTable('user_fav_code', table => {
+      table.bigIncrements('user_fav_code_id');
+      table
+        .bigInteger('user_id')
+        .references('user_id')
+        .inTable('users')
+        .onDelete('cascade')
+        .notNullable();
+      table
+        .bigInteger('file_id')
+        .references('file_id')
+        .inTable('code_files')
+        .onDelete('cascade')
+        .notNullable();
+      table.bigInteger('date_favorited').defaultTo(Date.now());
     });
 };
 
 exports.down = function(knex, Promise) {
   return knex.schema
-    .dropTable('user_doc_rating')
+    .dropTable('user_fav_code')
     .dropTable('user_code_rating')
+    .dropTable('code_files')
+    .dropTable('rdf_tree')
+    .dropTable('following_on_github')
+    .dropTable('user_github')
+    .dropTable('user_doc_rating')
     .dropTable('user_fav_user')
     .dropTable('user_fav_doc')
-    .dropTable('user_fav_code')
     .dropTable('user_doc')
-    .dropTable('user_code')
     .dropTable('documents')
-    .dropTable('code_files')
     .dropTable('users');
 };
