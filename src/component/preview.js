@@ -8,7 +8,7 @@ class Preview extends Component {
     return (
       <div>
         <SearchHeader />
-        <DetailPreview />
+        <DetailPreview match={this.props.match} />
       </div>
     );
   }

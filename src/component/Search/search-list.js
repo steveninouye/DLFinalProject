@@ -1,44 +1,38 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 
 class SearchList extends Component {
+  constructor(props) {
+    super(props);
+    this.showDetails = this.showDetails.bind(this);
+  }
+
+  showDetails(index) {
+    this.props.history.push(`/preview/${index}`);
+  }
+
   samplePreview() {
-    return (
-      <div>
-        <h2>Title</h2>
-        <a href="/preview">github.com/thisisonlyasampletotestmy/UI</a>
-        <br />
-        Lorem Ipsum is simply dummy text of the printing and typesetting
-        industry. Lorem Ipsum has been the industry's standard dummy text ever
-        since the 1500s, when an unknown printer took a galley of type and
-        scrambled it to make a type specimen book. It has survived not only five
-        centuries, but also the leap into electronic typesetting, remaining
-        essentially unchanged. It was popularised in the 1960s with the release
-        of Letraset sheets containing Lorem Ipsum passages, and more recently
-        with desktop publishing software like Aldus PageMaker including versions
-        of Lorem Ipsum
+    return this.props.codeSearchResults.map((file, index) => (
+      <div
+        key={file.file_id}
+        onClick={() => {
+          this.showDetails(index);
+        }}
+      >
+        <h3>{file.file_name}</h3>
+        <h4>{file.file_author}</h4>
+        <p>{file.file_code.slice(0, 500)}</p>
       </div>
-    );
+    ));
   }
 
   render() {
-    return (
-      <div className="col-10">
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-        {this.samplePreview()}
-      </div>
-    );
+    return <div className="col-10">{this.samplePreview()}</div>;
   }
 }
 
-export default SearchList;
+function mapStateToProps({ searchInput, codeSearchResults }) {
+  return { searchInput, codeSearchResults };
+}
+
+export default connect(mapStateToProps)(SearchList);

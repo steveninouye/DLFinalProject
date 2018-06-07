@@ -17,9 +17,7 @@
 .env.production.local
 db.sql
 knexfile.js
-singleFileScraper.js
-userScraper.js
-dir_and_repo.js
+/scraper-functions
 
 npm-debug.log*
 yarn-debug.log*

@@ -92,8 +92,13 @@ exports.up = function(knex, Promise) {
     })
     .createTable('user_github', table => {
       table.bigIncrements('user_github_id');
-      table.string('user_github_url');
+      table.string('github_html_url');
+      table.string('github_api_url');
+      table.integer('number_of_favorites');
+      table.integer('number_of_followers');
+      table.integer('number_of_repo');
       table.bigInteger('last_github_update').defaultTo(Date.now());
+      table.string('github_token');
       table
         .bigInteger('user_id')
         .references('user_id')
@@ -107,7 +112,7 @@ exports.up = function(knex, Promise) {
         .references('user_github_id')
         .inTable('user_github')
         .onDelete('cascade');
-      table.string('favorites');
+      table.string('favorite');
     })
     .createTable('rdf_tree', table => {
       table.bigIncrements('rdf_tree_id');
@@ -117,7 +122,7 @@ exports.up = function(knex, Promise) {
         .inTable('user_github')
         .onDelete('cascade');
       table.bigInteger('last_update').defaultTo(Date.now());
-      table.string('red_url').notNullable();
+      table.string('url').notNullable();
       table.integer('level').notNullable();
       table.bigInteger('parent_id');
     })

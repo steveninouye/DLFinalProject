@@ -1,12 +1,14 @@
 const express = require('express');
 const bp = require('body-parser');
+const cors = require('cors');
 // var cors = require('cors');
 // const jwt = require('jsonwebtoken');
 const knex = require('./knex/knex.js');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 const SECRETKEY = process.env.SECRETKEY || 'secretKey';
 
 const app = express();
+app.use(cors());
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: false }));
 
@@ -16,6 +18,15 @@ app.get('/', (req, res) => {
     .table('users')
     .then(data => {
       console.log(data);
+    });
+});
+app.post('/api/db/search', (req, res) => {
+  console.log('path hit: ', req.body.searchInput);
+  const { searchInput } = req.body;
+  knex('code_files')
+    .where('file_code', 'like', `%${searchInput}%`)
+    .then(data => {
+      res.json(data);
     });
 });
 

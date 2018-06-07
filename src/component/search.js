@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { searchedInput } from '../action/action_searched_input';
 
 import SearchHeader from './Search/search-header';
 import RefineSearch from './Search/refine-search';
@@ -12,7 +15,7 @@ class Search extends Component {
         <div className="container-fluid">
           <div className="row">
             <RefineSearch />
-            <SearchList />
+            <SearchList history={this.props.history} />
           </div>
         </div>
       </div>
@@ -20,4 +23,15 @@ class Search extends Component {
   }
 }
 
-export default Search;
+function mapStateToProps({ searchInput, codeSearchResults }) {
+  return { searchInput, codeSearchResults };
+}
+
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators({ searchedInput }, dispatch);
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Search);
