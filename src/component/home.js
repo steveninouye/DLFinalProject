@@ -32,7 +32,7 @@ class Home extends Component {
         <Link to="/sigin">Sign In</Link>
         <Link to="/shop">Swag</Link>
         <div className="jumbotron">
-          <h1 className="display-4">Kiss It</h1>
+          <h1 className="display-4">KISS I.T.</h1>
           <form onSubmit={this.onFormSubmit} action="/search">
             <label className="switch">
               <input type="checkbox" />
