@@ -1,38 +1,55 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import { Route, Link } from 'react-router-dom';
+
+import SearchCode from './search-lists/search-code';
+import SearchDoc from './search-lists/search-doc';
+import SearchForum from './search-lists/search-forum';
+import SearchVideo from './search-lists/search-video';
 
 class SearchList extends Component {
-  constructor(props) {
-    super(props);
-    this.showDetails = this.showDetails.bind(this);
-  }
-
-  showDetails(index) {
-    this.props.history.push(`/preview/${index}`);
-  }
-
-  samplePreview() {
-    return this.props.codeSearchResults.map((file, index) => (
-      <div
-        key={file.file_id}
-        onClick={() => {
-          this.showDetails(index);
-        }}
-      >
-        <h3>{file.file_name}</h3>
-        <h4>{file.file_author}</h4>
-        <p>{file.file_code.slice(0, 500)}</p>
-      </div>
-    ));
-  }
-
   render() {
-    return <div className="col-10">{this.samplePreview()}</div>;
+    const { match } = this.props;
+    return (
+      <div className="col-10">
+        <div class="tab">
+          <Link to={`${match.url}/code`}>
+            <button class="tablinks">Code</button>
+          </Link>
+          <Link to={`${match.url}/doc`}>
+            <button class="tablinks">Docs</button>
+          </Link>
+          <Link to={`${match.url}/forum`}>
+            <button class="tablinks">Forums</button>
+          </Link>
+          <Link to={`${match.url}/video`}>
+            <button class="tablinks">Videos</button>
+          </Link>
+        </div>
+        <div>
+          <Route
+            path={`${match.url}/code`}
+            component={SearchCode}
+            history={this.props.history}
+          />
+          <Route
+            path={`${match.url}/doc`}
+            component={SearchDoc}
+            history={this.props.history}
+          />
+          <Route
+            path={`${match.url}/forum`}
+            component={SearchForum}
+            history={this.props.history}
+          />
+          <Route
+            path={`${match.url}/video`}
+            component={SearchVideo}
+            history={this.props.history}
+          />
+        </div>
+      </div>
+    );
   }
 }
 
-function mapStateToProps({ searchInput, codeSearchResults }) {
-  return { searchInput, codeSearchResults };
-}
-
-export default connect(mapStateToProps)(SearchList);
+export default SearchList;

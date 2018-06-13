@@ -23,7 +23,6 @@ class DetailPreview extends Component {
         </span>
       );
     });
-    console.log(stuff);
     return stuff;
   }
 

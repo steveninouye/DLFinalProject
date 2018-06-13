@@ -15,7 +15,7 @@ class Search extends Component {
         <div className="container-fluid">
           <div className="row">
             <RefineSearch />
-            <SearchList history={this.props.history} />
+            <SearchList history={this.props.history} match={this.props.match} />
           </div>
         </div>
       </div>

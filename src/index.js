@@ -3,15 +3,14 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { createStore, applyMiddleware } from 'redux';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-// import { syncHistoryWithStore, routerReducer } from 'react-router-redux';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
-import registerServiceWorker from './registerServiceWorker';
 
 import reducers from './reducer';
 import Home from './component/home';
 import Search from './component/search';
 import Preview from './component/preview';
+import NotFound from './component/not-found';
 import ReduxPromise from 'redux-promise';
 
 const createStoreWithMiddleware = applyMiddleware(ReduxPromise)(createStore);
@@ -25,7 +24,8 @@ ReactDOM.render(
         <Switch>
           <Route path="/preview/:index" component={Preview} />
           <Route path="/search" component={Search} />
-          <Route path="/" component={Home} />
+          <Route path="/" exact component={Home} />
+          <Route path="*" component={NotFound} />
         </Switch>
       </div>
     </BrowserRouter>
@@ -33,4 +33,3 @@ ReactDOM.render(
 
   document.getElementById('root')
 );
-registerServiceWorker();
