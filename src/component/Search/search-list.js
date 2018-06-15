@@ -11,18 +11,18 @@ class SearchList extends Component {
     const { match } = this.props;
     return (
       <div className="col-10">
-        <div class="tab">
+        <div className="tab">
           <Link to={`${match.url}/code`}>
-            <button class="tablinks">Code</button>
+            <button className="tablinks">Code</button>
           </Link>
           <Link to={`${match.url}/doc`}>
-            <button class="tablinks">Docs</button>
+            <button className="tablinks">Docs</button>
           </Link>
           <Link to={`${match.url}/forum`}>
-            <button class="tablinks">Forums</button>
+            <button className="tablinks">Forums</button>
           </Link>
           <Link to={`${match.url}/video`}>
-            <button class="tablinks">Videos</button>
+            <button className="tablinks">Videos</button>
           </Link>
         </div>
         <div>

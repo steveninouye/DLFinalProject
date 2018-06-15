@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-class DetailPreview extends Component {
+class CodeDetail extends Component {
   getIndexOfFile() {
     return parseInt(this.props.match.params.index, 10);
   }
@@ -38,7 +38,7 @@ class DetailPreview extends Component {
     return (
       <div className="row">
         <div className="col">
-          <Link to={`/preview/${leftArrowIndex}`}>
+          <Link to={`/preview/code/${leftArrowIndex}`}>
             <img
               src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7f8nJGsWa-zdYBFVnDsCr9vBjgJG6-ZaLX7asxVaEcN1ozBUR"
               alt="leftArrow"
@@ -53,7 +53,7 @@ class DetailPreview extends Component {
           </pre>
         </div>
         <div className="col">
-          <Link to={`/preview/${rightArrowIndex}`}>
+          <Link to={`/preview/code/${rightArrowIndex}`}>
             <img
               src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgyLIJ8S0y2E04HgekZAmw9QNGpno7RzxTMmTVRQYmncbPkaJNaA"
               alt="rightArrow"
@@ -69,4 +69,4 @@ function mapStateToProps({ searchInput, codeSearchResults }) {
   return { searchInput, codeSearchResults };
 }
 
-export default connect(mapStateToProps)(DetailPreview);
+export default connect(mapStateToProps)(CodeDetail);

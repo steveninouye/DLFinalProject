@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { searchedInput } from '../action/action_searched_input';
-import { getSearchResults } from '../action/action_get_search_results';
+import { parseInput } from '../action/action_parse_input';
+// import { getVideoResults } from '../action/action_get_video_results';
+// import { getForumResults } from '../action/action_get_forum_results';
 import { getUser } from '../action/action_user';
 
 class Home extends Component {
@@ -12,7 +14,6 @@ class Home extends Component {
     this.onInputChange = this.onInputChange.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.state = { searchInput: this.props.searchInput || '' };
-    this.goToGitHub = this.goToGitHub.bind(this);
     this.signInSignOut = this.signInSignOut.bind(this);
   }
 
@@ -20,21 +21,17 @@ class Home extends Component {
     this.props.getUser();
   }
 
-  goToGitHub(e) {
-    e.preventDefault();
-    console.log('this is the one');
-    window.location = 'http://localhost:4000/auth/test';
-  }
-
   onInputChange(event) {
     this.setState({ searchInput: event.target.value });
   }
 
   onFormSubmit(event) {
+    const input = this.state.searchInput.trim();
     event.preventDefault();
-    // this.props.searchDB(this.state.searchInput);
-    this.props.searchedInput(this.state.searchInput);
-    this.props.getSearchResults(this.state.searchInput);
+    this.props.searchedInput(input);
+    this.props.parseInput(input);
+    // this.props.getVideoResults(input);
+    // this.props.getForumResults(input);
     this.props.history.push('/search/code');
   }
 
@@ -133,7 +130,13 @@ function mapStateToProps({ searchInput, user }) {
 
 function mapDispatchToProps(dispatch) {
   return bindActionCreators(
-    { searchedInput, getSearchResults, getUser },
+    {
+      searchedInput,
+      parseInput,
+      // getVideoResults,
+      // getForumResults,
+      getUser
+    },
     dispatch
   );
 }

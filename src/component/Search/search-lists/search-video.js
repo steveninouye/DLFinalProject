@@ -2,25 +2,15 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import Video from './video/video';
-import apiKey from '../../../keys/YTkey';
 
 class SearchVideo extends Component {
   constructor(props) {
     super(props);
-    this.apiKey = apiKey;
-    this.urlSearchQuery =
-      this.props.searchInput.replace(/\s/g, '+') + '+js+javascript';
     this.state = { videos: false };
   }
 
   componentDidMount() {
-    fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&order=relevance&q=${
-        this.urlSearchQuery
-      }&type=video&key=${this.apiKey}`
-    )
-      .then(response => response.json())
-      .then(data => this.setState({ videos: data.items }));
+    this.setState({ videos: this.props.videoSearchResults });
   }
 
   render() {
@@ -28,17 +18,20 @@ class SearchVideo extends Component {
     if (!videos) {
       return <div>Loading...</div>;
     } else {
-      return videos.map(video => (
-        <div>
-          <Video key={video.id.videoId} video={video} />
-        </div>
+      return videos.map((video, index) => (
+        <Video
+          key={video.id.videoId}
+          index={index}
+          history={this.props.history}
+          video={video}
+        />
       ));
     }
   }
 }
 
-function mapStateToProps({ searchInput, codeSearchResults }) {
-  return { searchInput, codeSearchResults };
+function mapStateToProps({ searchInput, videoSearchResults }) {
+  return { searchInput, videoSearchResults };
 }
 
 export default connect(mapStateToProps)(SearchVideo);
