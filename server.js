@@ -4,17 +4,16 @@ const passport = require('passport');
 const path = require('path');
 const bp = require('body-parser');
 const cors = require('cors');
-const morgan = require('morgan');
 
 const PassportStrategy = require('./config/passport');
 const keys = require('./config/keys');
 const authRoutes = require('./routes/auth');
+const apiRoutes = require('./routes/api');
 const knex = require('./knex/knex.js');
 const PORT = process.env.PORT || 4000;
 
 const app = express();
 
-// app.use(morgan('dev'));
 app.use(cors());
 app.use(bp.json());
 app.use(bp.urlencoded({ extended: false }));
@@ -31,17 +30,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/auth', authRoutes);
-
-app.post('/api/db/search', (req, res) => {
-  console.log(req.user);
-  console.log('path hit: ', req.body.searchInput);
-  const { searchInput } = req.body;
-  knex('code_files')
-    .where('file_code', 'like', `%${searchInput}%`)
-    .then(data => {
-      res.json(data);
-    });
-});
+app.use('/api', apiRoutes);
 
 app.use(express.static(path.join(__dirname, 'build')));
 

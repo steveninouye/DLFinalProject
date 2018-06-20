@@ -6,7 +6,7 @@ export function parseInput(input) {
     const searchFunction = input.slice(indexOfFlag + 2, indexOfFlag + 5);
     if (searchFunction === 'lib') {
       const searchInput = input.split('--lib').join('');
-      getCodeResults(searchInput, dispatch);
+      console.log(searchInput);
     } else if (searchFunction === 'com') {
       console.log('comment route');
       //   const searchInput = input.split('--com').join('');
@@ -15,6 +15,7 @@ export function parseInput(input) {
       //   const searchInput = input.split('--fun').join('');
     } else {
       console.log('misc route');
+      getCodeResults(input, dispatch);
     }
   };
 }
