@@ -11,23 +11,26 @@ export function parseInput(input) {
     const searchFunction = input.slice(indexOfFlag + 2, indexOfFlag + 5);
     if (searchFunction === 'lib') {
       if (input.indexOf('--lib-repo') !== -1) {
-        const searchInput = input
+        let searchInput = input
           .split('--lib-repo')
           .join('')
           .trim();
-        getRepoResults(searchInput, dispatch);
+        searchInput = searchInput.split(' ').map(e => e.trim());
+        getRepoResults(JSON.stringify(searchInput), dispatch);
       } else if (input.indexOf('--lib-file') !== -1) {
-        const searchInput = input
+        let searchInput = input
           .split('--lib-file')
           .join('')
           .trim();
-        getFileResults(searchInput, dispatch);
+        searchInput = searchInput.split('//').map(e => e.trim());
+        getFileResults(JSON.stringify(searchInput), dispatch);
       } else {
-        const searchInput = input
+        let searchInput = input
           .split('--lib')
           .join('')
           .trim();
-        getLibraryResults(searchInput, dispatch);
+        searchInput = searchInput.split(' ').map(e => e.trim());
+        getLibraryResults(JSON.stringify(searchInput), dispatch);
       }
     } else if (searchFunction === 'com') {
       console.log('comment route');
@@ -37,7 +40,8 @@ export function parseInput(input) {
       //   const searchInput = input.split('--fun').join('');
     } else {
       console.log('misc route');
-      getCodeResults(input, dispatch);
+      let searchInput = input.split('//').map(e => e.trim());
+      getCodeResults(JSON.stringify(input), dispatch);
     }
   };
 }

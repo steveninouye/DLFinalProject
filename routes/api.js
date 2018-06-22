@@ -39,9 +39,9 @@ function linkUserFavUserFiles(user) {
     .select({
       username: 'ru.username',
       user_id: 'ru.user_id',
-      num_followers: 'ru.num_of_followers',
+      num_of_followers: 'ru.num_of_followers',
       github_url: 'ru.github_url',
-      repo_Url: 'r.repo_url',
+      repo_url: 'r.repo_url',
       dir_file_name: 'df.dir_file_name',
       dir_file_url: 'df.dir_file_url',
       file_code: 'fc.file_code',
@@ -216,80 +216,81 @@ router.post('/lib/file', (req, res) => {
         res.json(data);
       });
   }
-
-  // linkCodeToUser(user)
-  //   .andWhere(q =>
-  //     q
-  //       .where('dir_and_files.dir_file_name', 'like', '%.ts')
-  //       .orWhere('dir_and_files.dir_file_name', 'like', '%.js')
-  //   )
-  //   .andWhere(q => {
-  //     q.where('file_code', 'like', `%require('${searchInput}')%`)
-  //       .orWhere('file_code', 'like', `%require("${searchInput}")%`)
-  //       .orWhere('file_code', 'like', `%from '${searchInput}'%`)
-  //       .orWhere('file_code', 'like', `%from "${searchInput}"%`);
-  //   })
-  //   .limit(200)
-  //   .then(data => {
-  //     if (data.length === 200) {
-  //       res.json(data);
-  //     } else {
-  //       linkCodeToUser()
-  //         .where(q => q.from('users').whereNot(user))
-  //         .andWhere(q =>
-  //           q
-  //             .where('dir_and_files.dir_file_name', 'like', '%.ts')
-  //             .orWhere('dir_and_files.dir_file_name', 'like', '%.js')
-  //         )
-  //         .andWhere(q => {
-  //           q.where('file_code', 'like', `%require('${searchInput}')%`)
-  //             .orWhere('file_code', 'like', `%require("${searchInput}")%`)
-  //             .orWhere('file_code', 'like', `%from '${searchInput}'%`)
-  //             .orWhere('file_code', 'like', `%from "${searchInput}"%`);
-  //         })
-  //         .limit(200)
-  //         .then(otherUserData => {
-  //           const allData = data.concat(otherUserData);
-  //           res.json(allData);
-  //         });
-  //     }
-  //   });
 });
 
 router.post('/lib/repo', (req, res) => {
-  const { searchInput } = req.body;
+  const addWhere = (func, arr, arrLastIndex) => {
+    if (arrLastIndex >= 0) {
+      return addWhere(
+        func.andWhere('file_code', 'like', `%"${arr[arrLastIndex]}":%`),
+        arr,
+        arrLastIndex - 1
+      );
+    } else {
+      return func;
+    }
+  };
+  let { searchInput } = req.body;
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
+  searchInput = JSON.parse(searchInput);
   if (user) {
-    linkCodeToUser(user)
-      .andWhere('dir_and_files.dir_file_name', 'package.json')
-      .andWhere(q => q.where('file_code', 'like', `%"${searchInput}":%`))
+    addWhere(
+      linkCodeToUser(user).andWhere(
+        'dir_and_files.dir_file_name',
+        'package.json'
+      ),
+      searchInput,
+      searchInput.length - 1
+    )
       .limit(numOfResults)
       .then(data => {
         data = addType(data, 'self');
         if (data.length === numOfResults) {
           res.json(data);
         } else {
-          linkUserFavUserFiles(user)
-            .andWhere('df.dir_file_name', 'package.json')
-            .andWhere(q =>
-              q.where('fc.file_code', 'like', `%"${searchInput}":%`)
-            )
+          const addFavWhere = (func, arr, arrLastIndex) => {
+            if (arrLastIndex >= 0) {
+              return addFavWhere(
+                func.andWhere(
+                  'fc.file_code',
+                  'like',
+                  `%"${arr[arrLastIndex]}":%`
+                ),
+                arr,
+                arrLastIndex - 1
+              );
+            } else {
+              return func;
+            }
+          };
+          addFavWhere(
+            linkUserFavUserFiles(user).andWhere(
+              'df.dir_file_name',
+              'package.json'
+            ),
+            searchInput,
+            searchInput.length - 1
+          )
             .orderBy('ru.num_of_followers', 'desc')
             .limit(numOfResults - data.length)
             .then(favUserData => {
               favUserData = addType(favUserData, 'favorite');
               const userAndFavUserData = data.concat(favUserData);
+              userAndFavUserData.forEach(e => console.log(e.username));
               if (userAndFavUserData.length === numOfResults) {
                 res.json(userAndFavUserData);
               } else {
                 const usernameArray = getAllUsernames(userAndFavUserData);
-                linkCodeToMiscUsers(usernameArray)
-                  .andWhere('dir_and_files.dir_file_name', 'package.json')
-                  .andWhere(q =>
-                    q.where('file_code', 'like', `%"${searchInput}":%`)
-                  )
+                addWhere(
+                  linkCodeToMiscUsers(usernameArray).andWhere(
+                    'dir_and_files.dir_file_name',
+                    'package.json'
+                  ),
+                  searchInput,
+                  searchInput.length - 1
+                )
                   .orderBy('users.num_of_followers', 'desc')
                   .limit(numOfResults - userAndFavUserData.length)
                   .then(miscUserData => {
@@ -302,9 +303,16 @@ router.post('/lib/repo', (req, res) => {
         }
       });
   } else {
-    linkCodeToMiscUsers([])
-      .andWhere('dir_and_files.dir_file_name', 'package.json')
-      .andWhere(q => q.where('file_code', 'like', `%"${searchInput}":%`))
+    addWhere(
+      linkCodeToMiscUsers([]).andWhere(
+        'dir_and_files.dir_file_name',
+        'package.json'
+      ),
+      searchInput,
+      searchInput.length - 1
+    )
+      .orderBy('users.num_of_followers', 'desc')
+      .limit(numOfResults)
       .then(data => {
         res.json(data);
       });
@@ -312,37 +320,68 @@ router.post('/lib/repo', (req, res) => {
 });
 
 router.post('/lib', (req, res) => {
-  const { searchInput } = req.body;
+  const addWhere = (func, arr, arrLastIndex) => {
+    if (arrLastIndex >= 0) {
+      return addWhere(
+        func.andWhere(q => {
+          q.where('file_code', 'like', `%'${arr[arrLastIndex]}'%`).orWhere(
+            'file_code',
+            'like',
+            `%"${arr[arrLastIndex]}"%`
+          );
+        }),
+        arr,
+        arrLastIndex - 1
+      );
+    } else {
+      return func;
+    }
+  };
+  let { searchInput } = req.body;
+  searchInput = JSON.parse(searchInput);
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
   if (user) {
-    linkCodeToUser(user)
-      .andWhere(q => q.whereNot('dir_and_files.dir_file_name', 'like', '%.md'))
-      .andWhere(q => {
-        q.where('file_code', 'like', `%'${searchInput}'%`).orWhere(
-          'file_code',
-          'like',
-          `%"${searchInput}"%`
-        );
-      })
+    addWhere(
+      linkCodeToUser(user).andWhere(q =>
+        q.whereNot('dir_and_files.dir_file_name', 'like', '%.md')
+      ),
+      searchInput,
+      searchInput.length - 1
+    )
       .limit(numOfResults)
       .then(data => {
         data = addType(data, 'self');
         if (data.length === numOfResults) {
           res.json(data);
         } else {
-          linkUserFavUserFiles(user)
-            .andWhere(q =>
-              q.whereNot('dir_and_files.dir_file_name', 'like', '%.md')
-            )
-            .andWhere(q => {
-              q.where('file_code', 'like', `%'${searchInput}'%`).orWhere(
-                'file_code',
-                'like',
-                `%"${searchInput}"%`
+          const addFavWhere = (func, arr, arrLastIndex) => {
+            if (arrLastIndex >= 0) {
+              return addFavWhere(
+                func.andWhere(q => {
+                  q.where(
+                    'fc.file_code',
+                    'like',
+                    `%'${arr[arrLastIndex]}'%`
+                  ).orWhere('fc.file_code', 'like', `%"${arr[arrLastIndex]}"%`);
+                }),
+                arr,
+                arrLastIndex - 1
               );
-            })
+            } else {
+              return func;
+            }
+          };
+          addFavWhere(
+            linkUserFavUserFiles(user).andWhereNot(
+              'df.dir_file_name',
+              'like',
+              '%.md'
+            ),
+            searchInput,
+            searchInput.length - 1
+          )
             .orderBy('ru.num_of_followers', 'desc')
             .limit(numOfResults - data.length)
             .then(favUserData => {
@@ -352,15 +391,15 @@ router.post('/lib', (req, res) => {
                 res.json(userAndFavUserData);
               } else {
                 const usernameArray = getAllUsernames(userAndFavUserData);
-                linkCodeToMiscUsers(usernameArray)
-                  .andWhere(q => q.whereNot('df.dir_file_name', 'like', '%.md'))
-                  .andWhere(q => {
-                    q.where(
-                      'fc.file_code',
-                      'like',
-                      `%'${searchInput}'%`
-                    ).orWhere('fc.file_code', 'like', `%"${searchInput}"%`);
-                  })
+                addWhere(
+                  linkCodeToMiscUsers(usernameArray).andWhereNot(
+                    'dir_and_files.dir_file_name',
+                    'like',
+                    '%.md'
+                  ),
+                  searchInput,
+                  searchInput.length - 1
+                )
                   .orderBy('users.num_of_followers', 'desc')
                   .limit(numOfResults - userAndFavUserData.length)
                   .then(miscUserData => {
@@ -373,15 +412,15 @@ router.post('/lib', (req, res) => {
         }
       });
   } else {
-    linkCodeToMiscUsers([])
-      .where(q => q.whereNot('dir_and_files.dir_file_name', 'like', '%.md'))
-      .andWhere(q => {
-        q.where('file_code', 'like', `%'${searchInput}'%`).orWhere(
-          'file_code',
-          'like',
-          `%"${searchInput}"%`
-        );
-      })
+    addWhere(
+      linkCodeToMiscUsers([]).where(q =>
+        q.whereNot('dir_and_files.dir_file_name', 'like', '%.md')
+      ),
+      searchInput,
+      searchInput.length - 1
+    )
+      .orderBy('users.num_of_followers', 'desc')
+      .limit(numOfResults)
       .then(data => {
         res.json(data);
       });

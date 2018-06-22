@@ -18,10 +18,11 @@ function linkCodeToUser(user) {
       'repositories.repo_url',
       'dir_and_files.dir_file_name',
       'dir_and_files.dir_file_url',
-      'file_code.file_code',
+      // 'file_code.file_code',
       'file_code.file_id'
     )
-    .where(q => q.whereNotIn('users.username', [user]));
+    .where(q => q.where('users.username', user));
+  // .andWhere('dir_and_files.dir_file_name', 'package.json');
 }
 
 function linkUserFavUserFiles(user) {
@@ -45,15 +46,30 @@ function linkUserFavUserFiles(user) {
     .where(q => q.where('users.username', user));
 }
 
-const user = 'yangshun';
-const searchInput = 'body-parser';
+const user = 'steveninouye';
+let searchInput = ['%express%', '%body-parser%'];
+// for (i = 0; i < 5; i++) {
+//   searchInput[i] = searchInput[i] ? searchInput[i] : '';
+// }
+// console.log(searchInput);
 
-linkCodeToUser(user)
-  .andWhere('file_code', 'like', `%${searchInput}%`)
-  .limit(200)
-  .then(data => {
+function addWhere(func, arr, mult) {
+  if (mult >= 0) {
+    return addWhere(
+      func.andWhere('file_code', 'like', `%${arr[mult]}%`),
+      arr,
+      mult - 1
+    );
+  } else {
+    return func;
+  }
+}
+
+addWhere(linkCodeToUser(user), searchInput, searchInput.length - 1).then(
+  data => {
     console.log(data);
-  });
+  }
+);
 
 // function linkCodeToUser(user) {
 //   return knex('file_code')
