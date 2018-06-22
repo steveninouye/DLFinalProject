@@ -1,4 +1,5 @@
 const passport = require('passport');
+const knex = require('../knex/knex');
 const GitHubStrategy = require('passport-github').Strategy;
 const keys = require('./keys');
 
@@ -27,7 +28,22 @@ passport.use(
       // check if user already exists in our own db
       // already have this user
       // console.log('user is: ', profile);
-      done(null, profile);
+      knex('users')
+        .select()
+        .where('username', profile.username)
+        .then(data => {
+          if (data.length === 0) {
+            console.log(
+              'user not registered and needs to be saved into database'
+            );
+          } else {
+            console.log(
+              `User "${profile.username}" already exists in database`
+            );
+            done(null, profile);
+          }
+        });
+      knex('users');
     }
   )
 );
