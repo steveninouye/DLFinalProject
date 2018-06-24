@@ -22,7 +22,7 @@ export function parseInput(input) {
           .split('--lib-file')
           .join('')
           .trim();
-        searchInput = searchInput.split('//').map(e => e.trim());
+        searchInput = searchInput.split(' ').map(e => e.trim());
         getFileResults(JSON.stringify(searchInput), dispatch);
       } else {
         let searchInput = input
@@ -40,8 +40,8 @@ export function parseInput(input) {
       //   const searchInput = input.split('--fun').join('');
     } else {
       console.log('misc route');
-      let searchInput = input.split('//').map(e => e.trim());
-      getCodeResults(JSON.stringify(input), dispatch);
+      let searchInput = input.split(' ').map(e => e.trim());
+      getCodeResults(JSON.stringify(searchInput), dispatch);
     }
   };
 }

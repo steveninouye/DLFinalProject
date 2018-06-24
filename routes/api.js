@@ -78,21 +78,45 @@ function addType(arr, type) {
 }
 
 router.post('/db/search', (req, res) => {
+  const addWhere = (func, arr, arrLastIndex) => {
+    if (arrLastIndex >= 0) {
+      return addWhere(
+        func.andWhere('file_code', 'like', `%${arr[arrLastIndex]}%`),
+        arr,
+        arrLastIndex - 1
+      );
+    } else {
+      return func;
+    }
+  };
   const { searchInput } = req.body;
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
   if (user) {
-    linkCodeToUser(user)
-      .andWhere('file_code', 'like', `%${searchInput}%`)
+    addWhere(linkCodeToUser(user), searchInput, searchInput.length - 1)
       .limit(numOfResults)
       .then(data => {
         data = addType(data, 'self');
         if (data.length === numOfResults) {
           res.json(data);
         } else {
-          linkUserFavUserFiles(user)
-            .andWhere('fc.file_code', 'like', `%${searchInput}%`)
+          const addFavWhere = (func, arr, arrLastIndex) => {
+            if (arrLastIndex >= 0) {
+              return addFavWhere(
+                func.andWhere('fc.file_code', 'like', `%${arr[arrLastIndex]}%`),
+                arr,
+                arrLastIndex - 1
+              );
+            } else {
+              return func;
+            }
+          };
+          addFavWhere(
+            linkUserFavUserFiles(user),
+            searchInput,
+            searchInput.length - 1
+          )
             .orderBy('ru.num_of_followers', 'desc')
             .limit(numOfResults - data.length)
             .then(favUserData => {
@@ -102,8 +126,11 @@ router.post('/db/search', (req, res) => {
                 res.json(userAndFavUserData);
               } else {
                 const usernameArray = getAllUsernames(userAndFavUserData);
-                linkCodeToMiscUsers(usernameArray)
-                  .andWhere('file_code', 'like', `%${searchInput}%`)
+                addWhere(
+                  linkCodeToMiscUsers(usernameArray),
+                  searchInput,
+                  searchInput.length - 1
+                )
                   .orderBy('users.num_of_followers', 'desc')
                   .limit(numOfResults - userAndFavUserData.length)
                   .then(miscUserData => {
@@ -116,8 +143,7 @@ router.post('/db/search', (req, res) => {
         }
       });
   } else {
-    linkCodeToMiscUsers([])
-      .andWhere('file_code', 'like', `%${searchInput}%`)
+    addWhere(linkCodeToMiscUsers([]), searchInput, searchInput.length - 1)
       .orderBy('users.num_of_followers', 'desc')
       .limit(numOfResults)
       .then(miscUserData => {

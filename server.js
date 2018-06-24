@@ -5,7 +5,7 @@ const path = require('path');
 const bp = require('body-parser');
 const cors = require('cors');
 
-const PassportStrategy = require('./config/passport');
+const PassportStrategy = require('./passport');
 const keys = require('./config/keys');
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
@@ -20,7 +20,7 @@ app.use(bp.urlencoded({ extended: false }));
 
 app.use(
   session({
-    secret: keys.session.cookieKey,
+    secret: process.env.COOKIE_KEY || keys.session.COOKIE_KEY,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }
