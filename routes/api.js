@@ -149,7 +149,8 @@ router.post('/db/search', (req, res) => {
       .then(miscUserData => {
         miscUserData = addType(miscUserData, 'misc');
         res.json(miscUserData);
-      });
+      })
+      .catch(err => console.log(err));
   }
 });
 
