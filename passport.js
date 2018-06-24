@@ -3,6 +3,7 @@ const knex = require('./knex/knex');
 const GitHubStrategy = require('passport-github').Strategy;
 const keys = require('./config/keys');
 console.log(keys);
+console.log(process.env);
 passport.serializeUser((user, done) => {
   const { id, username } = user;
   const usernameAndId = { id, username };
