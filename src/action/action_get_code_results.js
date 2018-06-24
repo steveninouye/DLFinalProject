@@ -1,8 +1,9 @@
 import axios from 'axios';
+const REACT_APP_URL = process.env.REACT_APP_URL;
 
 export function getCodeResults(input, dispatch) {
   axios
-    .post('http://localhost:4000/api/db/search', {
+    .post('${REACT_APP_URL}/api/db/search', {
       searchInput: input
     })
     .then(data => {
@@ -15,7 +16,7 @@ export function getCodeResults(input, dispatch) {
 
 export function getLibraryResults(input, dispatch) {
   axios
-    .post('http://localhost:4000/api/lib', {
+    .post('${REACT_APP_URL}/api/lib', {
       searchInput: input
     })
     .then(data => {
@@ -28,7 +29,7 @@ export function getLibraryResults(input, dispatch) {
 
 export function getRepoResults(input, dispatch) {
   axios
-    .post('http://localhost:4000/api/lib/repo', {
+    .post('${REACT_APP_URL}/api/lib/repo', {
       searchInput: input
     })
     .then(data => {
@@ -41,7 +42,7 @@ export function getRepoResults(input, dispatch) {
 
 export function getFileResults(input, dispatch) {
   axios
-    .post('http://localhost:4000/api/lib/file', {
+    .post('${REACT_APP_URL}/api/lib/file', {
       searchInput: input
     })
     .then(data => {
