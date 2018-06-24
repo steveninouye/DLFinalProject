@@ -7,6 +7,7 @@ import { parseInput } from '../action/action_parse_input';
 // import { getVideoResults } from '../action/action_get_video_results';
 // import { getForumResults } from '../action/action_get_forum_results';
 import { getUser } from '../action/action_user';
+import REACT_APP_URL from '../url';
 
 class Home extends Component {
   constructor(props) {
@@ -36,13 +37,15 @@ class Home extends Component {
   }
 
   signInSignOut(user) {
+    const login = `${REACT_APP_URL}/auth/login`;
+    const logout = `${REACT_APP_URL}/auth/logout`;
     if (user.username === undefined) {
-      return <a href="http://localhost:4000/auth/login">Sign In</a>;
+      return <a href={login}>Sign In</a>;
     } else {
       return (
         <span>
           {user.username}
-          <a href="http://localhost:4000/auth/logout">Sign Out</a>
+          <a href={logout}>Sign Out</a>
         </span>
       );
     }
@@ -56,7 +59,7 @@ class Home extends Component {
         {this.signInSignOut(this.props.user)}
         <div className="jumbotron">
           <h1 className="display-4">KISS I.T.</h1>
-          <form onSubmit={this.onFormSubmit} action="/search">
+          <form onSubmit={this.onFormSubmit}>
             <label className="switch">
               <input type="checkbox" />
               <span className="slider round" />

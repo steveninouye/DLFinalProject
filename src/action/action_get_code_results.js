@@ -1,5 +1,5 @@
 import axios from 'axios';
-const REACT_APP_URL = process.env.REACT_APP_URL;
+import REACT_APP_URL from '../url';
 
 export function getCodeResults(input, dispatch) {
   axios
