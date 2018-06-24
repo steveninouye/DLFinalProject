@@ -18,7 +18,7 @@
 db.sql
 knexfile.js
 /scraper-functions
-/config
+# /config
 /src/keys
 
 npm-debug.log*

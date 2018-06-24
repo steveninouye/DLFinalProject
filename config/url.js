@@ -1,3 +1,3 @@
 module.exports = {
-  server: 'http://localhost:4000'
+  server: process.env.URL
 };

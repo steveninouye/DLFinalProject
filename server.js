@@ -10,7 +10,7 @@ const keys = require('./config/keys');
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
 const knex = require('./knex/knex.js');
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || keys.PORT;
 
 const app = express();
 
