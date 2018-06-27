@@ -10,7 +10,7 @@ const keys = require('./config/keys');
 const authRoutes = require('./routes/auth');
 const apiRoutes = require('./routes/api');
 const knex = require('./knex/knex.js');
-const PORT = process.env.PORT || keys.PORT;
+const PORT = process.env.PORT || '4000';
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use(bp.urlencoded({ extended: false }));
 
 app.use(
   session({
-    secret: process.env.COOKIE_KEY || keys.session.COOKIE_KEY,
+    secret: process.env.COOKIE_KEY || 'secret',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false }

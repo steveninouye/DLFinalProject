@@ -1,12 +1,16 @@
 const { db } = require('./config/keys');
 
+const host = process.env.DB_URL || '127.0.0.1';
+const user = process.env.DB_USER || 'kissit';
+const password = process.env.DB_PASSWORD || 'teddyGrizzlyPandaBear';
+
 module.exports = {
   development: {
     client: 'pg',
     connection: {
-      host: process.env.DB_URL || db.DB_URL,
-      user: process.env.DB_USER || db.DB_USER,
-      password: process.env.DB_PASSWORD || db.DB_PASSWORD,
+      host: host,
+      user: user,
+      password: password,
       database: 'kissit',
       charset: 'utf8'
     },
