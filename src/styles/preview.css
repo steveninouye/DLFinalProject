@@ -1,0 +1,28 @@
+.videoPreview {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+iframe {
+  width: 1248px;
+  height: 702px;
+}
+
+.videoSlider {
+  display: flex;
+  justify-content: space-around;
+}
+
+.videoSlider > a > img,
+.videoSlider > img {
+  border: 1px solid black;
+  width: 240px;
+  height: 180px;
+}
+
+.videoSlider > img {
+  border: 5px solid #0069d9;
+}

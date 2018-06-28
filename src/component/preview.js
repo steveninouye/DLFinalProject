@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
+import '../styles/preview.css';
 
 import SearchHeader from './Search/search-header';
 import CodeDetail from './Preview/code_detail';
@@ -11,10 +12,26 @@ class Preview extends Component {
     return (
       <div>
         <SearchHeader />
-        <Route path={`${match.url}/code/:index`} component={CodeDetail} />
-        <Route path={`${match.url}/video/:index`} component={VideoDetail} />
-        <Route path={`${match.url}/forum/:index`} component={CodeDetail} />
-        <Route path={`${match.url}/doc/:index`} component={CodeDetail} />
+        <Route
+          path={`${match.url}/code/:index`}
+          history={this.props.history}
+          component={CodeDetail}
+        />
+        <Route
+          path={`${match.url}/video/:index`}
+          history={this.props.history}
+          component={VideoDetail}
+        />
+        <Route
+          path={`${match.url}/forum/:index`}
+          history={this.props.history}
+          component={CodeDetail}
+        />
+        <Route
+          path={`${match.url}/doc/:index`}
+          history={this.props.history}
+          component={CodeDetail}
+        />
       </div>
     );
   }

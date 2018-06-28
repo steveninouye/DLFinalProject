@@ -13,6 +13,7 @@ export function getVideoResults(input) {
         `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&order=relevance&q=${urlSearchQuery}&type=video&key=${YOUTUBE_KEY}`
       )
       .then(data => {
+        console.log(data);
         dispatch({
           type: 'GET_VIDEO_RESULTS',
           payload: data

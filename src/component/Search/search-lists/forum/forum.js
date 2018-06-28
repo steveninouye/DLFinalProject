@@ -2,7 +2,7 @@ import React from 'react';
 
 const Forum = ({ forum, history, index }) => {
   return (
-    <div>
+    <div className="forum">
       <a href={forum.link} target="_blank">
         <h1>{forum.title}</h1>
       </a>

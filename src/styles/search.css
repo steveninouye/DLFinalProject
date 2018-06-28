@@ -101,7 +101,8 @@
   flex: 20;
 }
 
-.tabPanel {
+.tabPanel,
+.tabVideoPanel {
   margin: 0;
   border: 1px solid rgb(230, 230, 230);
   padding-left: 30px;
@@ -164,4 +165,36 @@ pre {
 .repoLink .fileLink {
   width: 200px;
   flex: 1;
+}
+
+.forum {
+  padding-top: 5px;
+}
+
+.tabVideoPanel {
+  display: flex;
+  justify-content: space-around;
+  flex-flow: row wrap;
+}
+
+.videoResult {
+  width: 400px;
+  margin: 5px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mediaImage {
+  border-radius: 9px;
+}
+
+.mediaTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mediaDescription {
+  font-size: 14px;
+  font-style: italic;
 }
