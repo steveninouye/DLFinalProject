@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { searchedInput } from '../action/action_searched_input';
+import '../styles/search.css';
 
 import SearchHeader from './Search/search-header';
 import RefineSearch from './Search/refine-search';

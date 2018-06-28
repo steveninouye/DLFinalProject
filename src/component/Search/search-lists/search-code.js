@@ -4,27 +4,32 @@ import { connect } from 'react-redux';
 import Code from './code/code';
 
 class SearchCode extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { results: false };
-  }
-
-  componentDidMount() {
-    this.setState({ results: this.props.codeSearchResults });
-  }
-
   samplePreview() {
-    if (!this.state.results) {
-      return 'Loading......';
+    if (this.props.codeSearchResults.length === 0) {
+      return <p>Loading......</p>;
     } else {
-      return this.props.codeSearchResults.map((file, index) => (
-        <Code
-          history={this.props.history}
-          index={index}
-          file={file}
-          key={file.file_id}
-        />
-      ));
+      return this.props.codeSearchResults.map((file, index) => {
+        const indexOfSearch = file.file_code.indexOf(this.props.searchInput);
+        let beginningIndex;
+        let endIndex;
+        if (indexOfSearch < 301) {
+          beginningIndex = 0;
+          endIndex = 600 - indexOfSearch;
+        } else {
+          beginningIndex = 600 - indexOfSearch;
+          endIndex = indexOfSearch;
+        }
+        const file_code = file.file_code.slice(beginningIndex, endIndex);
+        return (
+          <Code
+            history={this.props.history}
+            index={index}
+            file={file}
+            file_code={file_code}
+            key={file.file_id}
+          />
+        );
+      });
     }
   }
 

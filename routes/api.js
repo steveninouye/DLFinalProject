@@ -18,6 +18,7 @@ function linkCode() {
       'users.user_id',
       'users.num_of_followers',
       'users.github_url',
+      'users.avatar',
       'repositories.repo_url',
       'dir_and_files.dir_file_name',
       'dir_and_files.dir_file_url',
@@ -38,6 +39,7 @@ function linkUserFavUserFiles(user) {
   return knex('users')
     .select({
       username: 'ru.username',
+      avatar: 'ru.avatar',
       user_id: 'ru.user_id',
       num_of_followers: 'ru.num_of_followers',
       github_url: 'ru.github_url',
@@ -81,7 +83,7 @@ router.post('/db/search', (req, res) => {
   const addWhere = (func, arr, arrLastIndex) => {
     if (arrLastIndex >= 0) {
       return addWhere(
-        func.andWhere('file_code', 'like', `%${arr[arrLastIndex]}%`),
+        func.andWhere('file_code.file_code', 'like', `%${arr[arrLastIndex]}%`),
         arr,
         arrLastIndex - 1
       );
