@@ -40,7 +40,7 @@ class Home extends Component {
     this.props.parseInput(input);
     this.props.getVideoResults(input);
     this.props.getForumResults(input);
-    this.props.history.push('/search/code');
+    this.props.history.push('/search');
   }
 
   signInSignOut(user) {

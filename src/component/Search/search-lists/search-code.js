@@ -12,11 +12,11 @@ class SearchCode extends Component {
         const indexOfSearch = file.file_code.indexOf(this.props.searchInput);
         let beginningIndex;
         let endIndex;
-        if (indexOfSearch < 301) {
+        if (indexOfSearch < 256) {
           beginningIndex = 0;
-          endIndex = 600 - indexOfSearch;
+          endIndex = 500 - indexOfSearch;
         } else {
-          beginningIndex = 600 - indexOfSearch;
+          beginningIndex = 500 - indexOfSearch;
           endIndex = indexOfSearch;
         }
         const file_code = file.file_code.slice(beginningIndex, endIndex);

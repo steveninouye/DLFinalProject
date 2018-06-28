@@ -6,8 +6,8 @@ let gitHubReqObj = {
   uri: `https://api.github.com/search/code?`,
   qs: {
     page: 1,
-    client_id: '',
-    client_secret: ''
+    client_id: 'b4835d3d7e23771765a8',
+    client_secret: '6e39a862e59d57249cff7a9928a694d3945a9c97'
   },
   headers: {
     'User-Agent': 'steveninouye'
