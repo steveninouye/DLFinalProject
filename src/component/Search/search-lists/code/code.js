@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Code = ({ file, history, index, file_code }) => {
-  const { dir_file_name, username, avatar } = file;
+  const { file_name, username, avatar } = file;
   return (
     <div
       onClick={() => {
@@ -12,7 +12,7 @@ const Code = ({ file, history, index, file_code }) => {
         <tbody>
           <tr>
             <td>
-              <h3>{dir_file_name}</h3>
+              <h3>{file_name}</h3>
             </td>
             <td>
               <img className="userAvatar" src={avatar} alt={username} />{' '}
@@ -21,7 +21,9 @@ const Code = ({ file, history, index, file_code }) => {
           </tr>
         </tbody>
       </table>
-      <p>{file_code}</p>
+      <pre style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
+        {file_code}
+      </pre>
     </div>
   );
 };

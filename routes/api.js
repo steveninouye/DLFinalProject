@@ -1,457 +1,520 @@
 const router = require('express').Router();
 const knex = require('../knex/knex.js');
+const reqProm = require('request-promise');
 
-const numOfResults = 200;
-
-function linkCode() {
-  return knex('file_code')
-    .join(
-      'dir_and_files',
-      'file_code.dir_file_id',
-      '=',
-      'dir_and_files.dir_file_id'
-    )
-    .join('repositories', 'dir_and_files.repo_id', '=', 'repositories.repo_id')
-    .join('users', 'users.user_id', '=', 'repositories.user_id')
-    .select(
-      'users.username',
-      'users.user_id',
-      'users.num_of_followers',
-      'users.github_url',
-      'users.avatar',
-      'repositories.repo_url',
-      'dir_and_files.dir_file_name',
-      'dir_and_files.dir_file_url',
-      'file_code.file_code',
-      'file_code.file_id'
-    );
-}
-
-function linkCodeToUser(user) {
-  return linkCode().where(q => q.where('users.username', user));
-}
-
-function linkCodeToMiscUsers(userArray) {
-  return linkCode().where(q => q.whereNotIn('users.username', userArray));
-}
-
-function linkUserFavUserFiles(user) {
-  return knex('users')
-    .select({
-      username: 'ru.username',
-      avatar: 'ru.avatar',
-      user_id: 'ru.user_id',
-      num_of_followers: 'ru.num_of_followers',
-      github_url: 'ru.github_url',
-      repo_url: 'r.repo_url',
-      dir_file_name: 'df.dir_file_name',
-      dir_file_url: 'df.dir_file_url',
-      file_code: 'fc.file_code',
-      file_id: 'fc.file_id'
-    })
-    .join({ f: 'user_fav_user' }, 'f.user_id', '=', 'users.user_id')
-    .join({ r: 'repositories' }, 'r.user_id', '=', 'f.fav_user_id')
-    .join({ ru: 'users' }, 'ru.user_id', '=', 'r.user_id')
-    .join({ df: 'dir_and_files' }, 'df.repo_id', '=', 'r.repo_id')
-    .join({ fc: 'file_code' }, 'fc.dir_file_id', '=', 'df.dir_file_id')
-    .where(q => q.where('users.username', user));
-}
-
-function getAllUsernames(arr) {
-  return arr.reduce((acc, curr) => {
-    if (curr.username) {
-      if (acc.indexOf(curr.username) === -1) {
-        acc.push(curr.username);
-      }
-    } else if (curr.fav_username) {
-      if (acc.indexOf(curr.fav_username) === -1) {
-        acc.push(curr.fav_username);
-      }
-    }
-    return acc;
-  }, []);
-}
-
-function addType(arr, type) {
-  return arr.map(e => {
-    e.type = type;
-    return e;
-  });
-}
+let gitHubReqObj = {
+  uri: `https://api.github.com/search/code?`,
+  qs: {
+    page: 1,
+    client_id: '',
+    client_secret: ''
+  },
+  headers: {
+    'User-Agent': 'steveninouye'
+  },
+  json: true
+};
 
 router.post('/db/search', (req, res) => {
-  const addWhere = (func, arr, arrLastIndex) => {
-    if (arrLastIndex >= 0) {
-      return addWhere(
-        func.andWhere('file_code.file_code', 'like', `%${arr[arrLastIndex]}%`),
-        arr,
-        arrLastIndex - 1
-      );
-    } else {
-      return func;
-    }
-  };
-  const { searchInput } = req.body;
+  const searchInput = JSON.parse(req.body.searchInput);
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
+  let clientResponse = [];
+  let prevClientResponseLength = 0;
+  /////////////   FUNCTION     /////////////////////
+  const getResultsOfUsers = (userArr, searchArr, resArr) => {
+    const promiseArr = [];
+    const userQueryString = userArr.reduce(
+      (acc, user) => `${acc}+user:${user.username}`,
+      ''
+    );
+    const searchStringQuery = searchArr.reduce(
+      (acc, termStr) => `${acc}${termStr}+`,
+      ''
+    );
+    const gitHubApiReqObj = Object.assign({}, gitHubReqObj);
+    gitHubApiReqObj.uri += `q=${searchStringQuery}language:JavaScript${userQueryString}`;
+    return reqProm(gitHubApiReqObj).then(codeApiResponse => {
+      const searchResults = codeApiResponse.items;
+      searchResults.forEach(file => {
+        const repository = file.repository.name;
+        const username = file.repository.owner.login;
+        const avatar = file.repository.owner.avatar_url;
+        const user_github_url = file.repository.owner.html_url;
+        const file_html_url = file.html_url;
+        // end of the url
+        const blobIndex = file_html_url.indexOf('/blob/');
+        const endUrl = file_html_url.slice(blobIndex + 6);
+        const firstSlashIndex = endUrl.indexOf('/');
+        const file_path = endUrl.slice(firstSlashIndex + 1);
+        const lastSlashIndex = endUrl.lastIndexOf('/');
+        const file_name = endUrl.slice(lastSlashIndex + 1);
+        const resultObj = {
+          avatar,
+          username,
+          repository,
+          user_github_url,
+          file_html_url,
+          file_path,
+          file_name
+        };
+        // push result into response array
+        resArr.push(resultObj);
+        // create object to request code
+        const rawReqObj = Object.assign({}, gitHubReqObj);
+        rawReqObj.uri = `https://raw.githubusercontent.com/${username}/${repository}/${endUrl}`;
+        delete rawReqObj.json;
+        promiseArr.push(reqProm(rawReqObj));
+      });
+      return Promise.all(promiseArr);
+    });
+  };
+  ///////////////////////////////////////////////////////////
   if (user) {
-    addWhere(linkCodeToUser(user), searchInput, searchInput.length - 1)
-      .limit(numOfResults)
-      .then(data => {
-        data = addType(data, 'self');
-        if (data.length === numOfResults) {
-          res.json(data);
-        } else {
-          const addFavWhere = (func, arr, arrLastIndex) => {
-            if (arrLastIndex >= 0) {
-              return addFavWhere(
-                func.andWhere('fc.file_code', 'like', `%${arr[arrLastIndex]}%`),
-                arr,
-                arrLastIndex - 1
-              );
-            } else {
-              return func;
-            }
-          };
-          addFavWhere(
-            linkUserFavUserFiles(user),
-            searchInput,
-            searchInput.length - 1
-          )
-            .orderBy('ru.num_of_followers', 'desc')
-            .limit(numOfResults - data.length)
-            .then(favUserData => {
-              favUserData = addType(favUserData, 'favorite');
-              const userAndFavUserData = data.concat(favUserData);
-              if (userAndFavUserData.length === numOfResults) {
-                res.json(userAndFavUserData);
-              } else {
-                const usernameArray = getAllUsernames(userAndFavUserData);
-                addWhere(
-                  linkCodeToMiscUsers(usernameArray),
-                  searchInput,
-                  searchInput.length - 1
-                )
-                  .orderBy('users.num_of_followers', 'desc')
-                  .limit(numOfResults - userAndFavUserData.length)
-                  .then(miscUserData => {
-                    miscUserData = addType(miscUserData, 'misc');
-                    const allUserData = userAndFavUserData.concat(miscUserData);
-                    res.json(allUserData);
-                  });
-              }
-            });
-        }
+    knex('users')
+      .select('username')
+      .where('username', user)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
+      })
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        return knex('users')
+          .select('fu.username')
+          .join({ f: 'user_fav_user' }, 'f.user_id', '=', 'users.user_id')
+          .join({ fu: 'users' }, 'fu.user_id', '=', 'f.fav_user_id')
+          .where('users.username', user);
+      })
+      .then(favUsers => {
+        return getResultsOfUsers(favUsers, searchInput, clientResponse);
+      })
+      .then(favUserCodeArr => {
+        favUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        const currentUsernames = clientResponse.reduce((acc, user) => {
+          if (acc.indexOf(user.username) === -1) {
+            acc.push(user.username);
+          }
+          return acc;
+        }, []);
+        return knex('users')
+          .select('username')
+          .whereNotIn('username', currentUsernames)
+          .orderBy('fu.num_of_followers', 'desc')
+          .limit(50);
+      })
+      .then(miscUsernames => {
+        return getResultsOfUsers(miscUsernames, searchInput, clientResponse);
+      })
+      .then(miscUserCodeArr => {
+        miscUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   } else {
-    addWhere(linkCodeToMiscUsers([]), searchInput, searchInput.length - 1)
-      .orderBy('users.num_of_followers', 'desc')
-      .limit(numOfResults)
-      .then(miscUserData => {
-        miscUserData = addType(miscUserData, 'misc');
-        res.json(miscUserData);
+    knex('users')
+      .select('username')
+      .orderBy('num_of_followers', 'desc')
+      .limit(50)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
       })
-      .catch(err => console.log(err));
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
+      });
   }
 });
 
 router.post('/lib/file', (req, res) => {
-  const { searchInput } = req.body;
+  const searchInput = JSON.parse(req.body.searchInput);
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
+  let clientResponse = [];
+  let prevClientResponseLength = 0;
+  /////////////   FUNCTION     /////////////////////
+  const getResultsOfUsers = (userArr, searchArr, resArr) => {
+    const promiseArr = [];
+    const userQueryString = userArr.reduce(
+      (acc, user) => `${acc}+user:${user.username}`,
+      ''
+    );
+    const searchStringQuery = searchArr.reduce(
+      (acc, termStr) => `${acc}${termStr}+`,
+      ''
+    );
+    const gitHubApiReqObj = Object.assign({}, gitHubReqObj);
+    gitHubApiReqObj.uri += `q=${searchStringQuery}language:JavaScript+extension:js+extension:ts${userQueryString}`;
+    return reqProm(gitHubApiReqObj).then(codeApiResponse => {
+      const searchResults = codeApiResponse.items;
+      searchResults.forEach(file => {
+        const repository = file.repository.name;
+        const username = file.repository.owner.login;
+        const avatar = file.repository.owner.avatar_url;
+        const user_github_url = file.repository.owner.html_url;
+        const file_html_url = file.html_url;
+        // end of the url
+        const blobIndex = file_html_url.indexOf('/blob/');
+        const endUrl = file_html_url.slice(blobIndex + 6);
+        const firstSlashIndex = endUrl.indexOf('/');
+        const file_path = endUrl.slice(firstSlashIndex + 1);
+        const lastSlashIndex = endUrl.lastIndexOf('/');
+        const file_name = endUrl.slice(lastSlashIndex + 1);
+        const resultObj = {
+          avatar,
+          username,
+          repository,
+          user_github_url,
+          file_html_url,
+          file_path,
+          file_name
+        };
+        // push result into response array
+        resArr.push(resultObj);
+        // create object to request code
+        const rawReqObj = Object.assign({}, gitHubReqObj);
+        rawReqObj.uri = `https://raw.githubusercontent.com/${username}/${repository}/${endUrl}`;
+        delete rawReqObj.json;
+        promiseArr.push(reqProm(rawReqObj));
+      });
+      return Promise.all(promiseArr);
+    });
+  };
+  ///////////////////////////////////////////////////////////
   if (user) {
-    linkCodeToUser(user)
-      .andWhere(q =>
-        q
-          .where('dir_and_files.dir_file_name', 'like', '%.ts')
-          .orWhere('dir_and_files.dir_file_name', 'like', '%.js')
-      )
-      .andWhere(q => {
-        q.where('file_code', 'like', `%require('${searchInput}')%`)
-          .orWhere('file_code', 'like', `%require("${searchInput}")%`)
-          .orWhere('file_code', 'like', `%from '${searchInput}'%`)
-          .orWhere('file_code', 'like', `%from "${searchInput}"%`);
+    knex('users')
+      .select('username')
+      .where('username', user)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
       })
-      .limit(numOfResults)
-      .then(data => {
-        data = addType(data, 'self');
-        if (data.length === numOfResults) {
-          res.json(data);
-        } else {
-          linkUserFavUserFiles(user)
-            .andWhere(q =>
-              q
-                .where('df.dir_file_name', 'like', '%.ts')
-                .orWhere('df.dir_file_name', 'like', '%.js')
-            )
-            .andWhere(q => {
-              q.where('fc.file_code', 'like', `%require('${searchInput}')%`)
-                .orWhere('fc.file_code', 'like', `%require("${searchInput}")%`)
-                .orWhere('fc.file_code', 'like', `%from '${searchInput}'%`)
-                .orWhere('fc.file_code', 'like', `%from "${searchInput}"%`);
-            })
-            .orderBy('ru.num_of_followers', 'desc')
-            .limit(numOfResults - data.length)
-            .then(favUserData => {
-              favUserData = addType(favUserData, 'favorite');
-              const userAndFavUserData = data.concat(favUserData);
-              if (userAndFavUserData.length === numOfResults) {
-                res.json(userAndFavUserData);
-              } else {
-                const usernameArray = getAllUsernames(userAndFavUserData);
-                linkCodeToMiscUsers(usernameArray)
-                  .andWhere(q =>
-                    q
-                      .where('dir_and_files.dir_file_name', 'like', '%.ts')
-                      .orWhere('dir_and_files.dir_file_name', 'like', '%.js')
-                  )
-                  .andWhere(q => {
-                    q.where('file_code', 'like', `%require('${searchInput}')%`)
-                      .orWhere(
-                        'file_code',
-                        'like',
-                        `%require("${searchInput}")%`
-                      )
-                      .orWhere('file_code', 'like', `%from '${searchInput}'%`)
-                      .orWhere('file_code', 'like', `%from "${searchInput}"%`);
-                  })
-                  .orderBy('users.num_of_followers', 'desc')
-                  .limit(numOfResults - userAndFavUserData.length)
-                  .then(miscUserData => {
-                    miscUserData = addType(miscUserData, 'misc');
-                    const allUserData = userAndFavUserData.concat(miscUserData);
-                    res.json(allUserData);
-                  });
-              }
-            });
-        }
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        return knex('users')
+          .select('fu.username')
+          .join({ f: 'user_fav_user' }, 'f.user_id', '=', 'users.user_id')
+          .join({ fu: 'users' }, 'fu.user_id', '=', 'f.fav_user_id')
+          .where('users.username', user);
+      })
+      .then(favUsers => {
+        return getResultsOfUsers(favUsers, searchInput, clientResponse);
+      })
+      .then(favUserCodeArr => {
+        favUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        const currentUsernames = clientResponse.reduce((acc, user) => {
+          if (acc.indexOf(user.username) === -1) {
+            acc.push(user.username);
+          }
+          return acc;
+        }, []);
+        return knex('users')
+          .select('username')
+          .whereNotIn('username', currentUsernames)
+          .orderBy('fu.num_of_followers', 'desc')
+          .limit(50);
+      })
+      .then(miscUsernames => {
+        return getResultsOfUsers(miscUsernames, searchInput, clientResponse);
+      })
+      .then(miscUserCodeArr => {
+        miscUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   } else {
-    linkCodeToMiscUsers([])
-      .andWhere(q =>
-        q
-          .where('dir_and_files.dir_file_name', 'like', '%.ts')
-          .orWhere('dir_and_files.dir_file_name', 'like', '%.js')
-      )
-      .andWhere(q => {
-        q.where('file_code', 'like', `%require('${searchInput}')%`)
-          .orWhere('file_code', 'like', `%require("${searchInput}")%`)
-          .orWhere('file_code', 'like', `%from '${searchInput}'%`)
-          .orWhere('file_code', 'like', `%from "${searchInput}"%`);
+    knex('users')
+      .select('username')
+      .orderBy('num_of_followers', 'desc')
+      .limit(50)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
       })
-      .then(data => {
-        res.json(data);
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   }
 });
 
 router.post('/lib/repo', (req, res) => {
-  const addWhere = (func, arr, arrLastIndex) => {
-    if (arrLastIndex >= 0) {
-      return addWhere(
-        func.andWhere('file_code', 'like', `%"${arr[arrLastIndex]}":%`),
-        arr,
-        arrLastIndex - 1
-      );
-    } else {
-      return func;
-    }
-  };
-  let { searchInput } = req.body;
+  const searchInput = JSON.parse(req.body.searchInput);
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
-  searchInput = JSON.parse(searchInput);
+  let clientResponse = [];
+  let prevClientResponseLength = 0;
+  /////////////   FUNCTION     /////////////////////
+  const getResultsOfUsers = (userArr, searchArr, resArr) => {
+    const promiseArr = [];
+    const userQueryString = userArr.reduce(
+      (acc, user) => `${acc}+user:${user.username}`,
+      ''
+    );
+    const searchStringQuery = searchArr.reduce(
+      (acc, termStr) => `${acc}${termStr}+`,
+      ''
+    );
+    const gitHubApiReqObj = Object.assign({}, gitHubReqObj);
+    gitHubApiReqObj.uri += `q=${searchStringQuery}filename:package.json${userQueryString}`;
+    return reqProm(gitHubApiReqObj).then(codeApiResponse => {
+      const searchResults = codeApiResponse.items;
+      searchResults.forEach(file => {
+        const repository = file.repository.name;
+        const username = file.repository.owner.login;
+        const avatar = file.repository.owner.avatar_url;
+        const user_github_url = file.repository.owner.html_url;
+        const file_html_url = file.html_url;
+        // end of the url
+        const blobIndex = file_html_url.indexOf('/blob/');
+        const endUrl = file_html_url.slice(blobIndex + 6);
+        const firstSlashIndex = endUrl.indexOf('/');
+        const file_path = endUrl.slice(firstSlashIndex + 1);
+        const lastSlashIndex = endUrl.lastIndexOf('/');
+        const file_name = endUrl.slice(lastSlashIndex + 1);
+        const resultObj = {
+          avatar,
+          username,
+          repository,
+          user_github_url,
+          file_html_url,
+          file_path,
+          file_name
+        };
+        // push result into response array
+        resArr.push(resultObj);
+        // create object to request code
+        const rawReqObj = Object.assign({}, gitHubReqObj);
+        rawReqObj.uri = `https://raw.githubusercontent.com/${username}/${repository}/${endUrl}`;
+        delete rawReqObj.json;
+        promiseArr.push(reqProm(rawReqObj));
+      });
+      return Promise.all(promiseArr);
+    });
+  };
+  ///////////////////////////////////////////////////////////
   if (user) {
-    addWhere(
-      linkCodeToUser(user).andWhere(
-        'dir_and_files.dir_file_name',
-        'package.json'
-      ),
-      searchInput,
-      searchInput.length - 1
-    )
-      .limit(numOfResults)
-      .then(data => {
-        data = addType(data, 'self');
-        if (data.length === numOfResults) {
-          res.json(data);
-        } else {
-          const addFavWhere = (func, arr, arrLastIndex) => {
-            if (arrLastIndex >= 0) {
-              return addFavWhere(
-                func.andWhere(
-                  'fc.file_code',
-                  'like',
-                  `%"${arr[arrLastIndex]}":%`
-                ),
-                arr,
-                arrLastIndex - 1
-              );
-            } else {
-              return func;
-            }
-          };
-          addFavWhere(
-            linkUserFavUserFiles(user).andWhere(
-              'df.dir_file_name',
-              'package.json'
-            ),
-            searchInput,
-            searchInput.length - 1
-          )
-            .orderBy('ru.num_of_followers', 'desc')
-            .limit(numOfResults - data.length)
-            .then(favUserData => {
-              favUserData = addType(favUserData, 'favorite');
-              const userAndFavUserData = data.concat(favUserData);
-              userAndFavUserData.forEach(e => console.log(e.username));
-              if (userAndFavUserData.length === numOfResults) {
-                res.json(userAndFavUserData);
-              } else {
-                const usernameArray = getAllUsernames(userAndFavUserData);
-                addWhere(
-                  linkCodeToMiscUsers(usernameArray).andWhere(
-                    'dir_and_files.dir_file_name',
-                    'package.json'
-                  ),
-                  searchInput,
-                  searchInput.length - 1
-                )
-                  .orderBy('users.num_of_followers', 'desc')
-                  .limit(numOfResults - userAndFavUserData.length)
-                  .then(miscUserData => {
-                    miscUserData = addType(miscUserData, 'misc');
-                    const allUserData = userAndFavUserData.concat(miscUserData);
-                    res.json(allUserData);
-                  });
-              }
-            });
-        }
+    knex('users')
+      .select('username')
+      .where('username', user)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
+      })
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        return knex('users')
+          .select('fu.username')
+          .join({ f: 'user_fav_user' }, 'f.user_id', '=', 'users.user_id')
+          .join({ fu: 'users' }, 'fu.user_id', '=', 'f.fav_user_id')
+          .where('users.username', user);
+      })
+      .then(favUsers => {
+        return getResultsOfUsers(favUsers, searchInput, clientResponse);
+      })
+      .then(favUserCodeArr => {
+        favUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        const currentUsernames = clientResponse.reduce((acc, user) => {
+          if (acc.indexOf(user.username) === -1) {
+            acc.push(user.username);
+          }
+          return acc;
+        }, []);
+        return knex('users')
+          .select('username')
+          .whereNotIn('username', currentUsernames)
+          .orderBy('fu.num_of_followers', 'desc')
+          .limit(50);
+      })
+      .then(miscUsernames => {
+        return getResultsOfUsers(miscUsernames, searchInput, clientResponse);
+      })
+      .then(miscUserCodeArr => {
+        miscUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   } else {
-    addWhere(
-      linkCodeToMiscUsers([]).andWhere(
-        'dir_and_files.dir_file_name',
-        'package.json'
-      ),
-      searchInput,
-      searchInput.length - 1
-    )
-      .orderBy('users.num_of_followers', 'desc')
-      .limit(numOfResults)
-      .then(data => {
-        res.json(data);
+    knex('users')
+      .select('username')
+      .orderBy('num_of_followers', 'desc')
+      .limit(50)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
+      })
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   }
 });
 
 router.post('/lib', (req, res) => {
-  const addWhere = (func, arr, arrLastIndex) => {
-    if (arrLastIndex >= 0) {
-      return addWhere(
-        func.andWhere(q => {
-          q.where('file_code', 'like', `%'${arr[arrLastIndex]}'%`).orWhere(
-            'file_code',
-            'like',
-            `%"${arr[arrLastIndex]}"%`
-          );
-        }),
-        arr,
-        arrLastIndex - 1
-      );
-    } else {
-      return func;
-    }
-  };
-  let { searchInput } = req.body;
-  searchInput = JSON.parse(searchInput);
+  const searchInput = JSON.parse(req.body.searchInput);
   const user = req.user ? req.user.username : undefined;
   console.log('searchInput: ', searchInput);
   console.log('this is the user: ', user);
+  let clientResponse = [];
+  let prevClientResponseLength = 0;
+  /////////////   FUNCTION     /////////////////////
+  const getResultsOfUsers = (userArr, searchArr, resArr) => {
+    const promiseArr = [];
+    const userQueryString = userArr.reduce(
+      (acc, user) => `${acc}+user:${user.username}`,
+      ''
+    );
+    const searchStringQuery = searchArr.reduce(
+      (acc, termStr) => `${acc}${termStr}+`,
+      ''
+    );
+    const gitHubApiReqObj = Object.assign({}, gitHubReqObj);
+    gitHubApiReqObj.uri += `q=${searchStringQuery}extension:js+extension:ts+extension:json${userQueryString}`;
+    return reqProm(gitHubApiReqObj).then(codeApiResponse => {
+      const searchResults = codeApiResponse.items;
+      searchResults.forEach(file => {
+        const repository = file.repository.name;
+        const username = file.repository.owner.login;
+        const avatar = file.repository.owner.avatar_url;
+        const user_github_url = file.repository.owner.html_url;
+        const file_html_url = file.html_url;
+        // end of the url
+        const blobIndex = file_html_url.indexOf('/blob/');
+        const endUrl = file_html_url.slice(blobIndex + 6);
+        const firstSlashIndex = endUrl.indexOf('/');
+        const file_path = endUrl.slice(firstSlashIndex + 1);
+        const lastSlashIndex = endUrl.lastIndexOf('/');
+        const file_name = endUrl.slice(lastSlashIndex + 1);
+        const resultObj = {
+          avatar,
+          username,
+          repository,
+          user_github_url,
+          file_html_url,
+          file_path,
+          file_name
+        };
+        // push result into response array
+        resArr.push(resultObj);
+        // create object to request code
+        const rawReqObj = Object.assign({}, gitHubReqObj);
+        rawReqObj.uri = `https://raw.githubusercontent.com/${username}/${repository}/${endUrl}`;
+        delete rawReqObj.json;
+        promiseArr.push(reqProm(rawReqObj));
+      });
+      return Promise.all(promiseArr);
+    });
+  };
+  ///////////////////////////////////////////////////////////
   if (user) {
-    addWhere(
-      linkCodeToUser(user).andWhere(q =>
-        q.whereNot('dir_and_files.dir_file_name', 'like', '%.md')
-      ),
-      searchInput,
-      searchInput.length - 1
-    )
-      .limit(numOfResults)
-      .then(data => {
-        data = addType(data, 'self');
-        if (data.length === numOfResults) {
-          res.json(data);
-        } else {
-          const addFavWhere = (func, arr, arrLastIndex) => {
-            if (arrLastIndex >= 0) {
-              return addFavWhere(
-                func.andWhere(q => {
-                  q.where(
-                    'fc.file_code',
-                    'like',
-                    `%'${arr[arrLastIndex]}'%`
-                  ).orWhere('fc.file_code', 'like', `%"${arr[arrLastIndex]}"%`);
-                }),
-                arr,
-                arrLastIndex - 1
-              );
-            } else {
-              return func;
-            }
-          };
-          addFavWhere(
-            linkUserFavUserFiles(user).andWhereNot(
-              'df.dir_file_name',
-              'like',
-              '%.md'
-            ),
-            searchInput,
-            searchInput.length - 1
-          )
-            .orderBy('ru.num_of_followers', 'desc')
-            .limit(numOfResults - data.length)
-            .then(favUserData => {
-              favUserData = addType(favUserData, 'favorite');
-              const userAndFavUserData = data.concat(favUserData);
-              if (userAndFavUserData.length === numOfResults) {
-                res.json(userAndFavUserData);
-              } else {
-                const usernameArray = getAllUsernames(userAndFavUserData);
-                addWhere(
-                  linkCodeToMiscUsers(usernameArray).andWhereNot(
-                    'dir_and_files.dir_file_name',
-                    'like',
-                    '%.md'
-                  ),
-                  searchInput,
-                  searchInput.length - 1
-                )
-                  .orderBy('users.num_of_followers', 'desc')
-                  .limit(numOfResults - userAndFavUserData.length)
-                  .then(miscUserData => {
-                    miscUserData = addType(miscUserData, 'misc');
-                    const allUserData = userAndFavUserData.concat(miscUserData);
-                    res.json(allUserData);
-                  });
-              }
-            });
-        }
+    knex('users')
+      .select('username')
+      .where('username', user)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
+      })
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        return knex('users')
+          .select('fu.username')
+          .join({ f: 'user_fav_user' }, 'f.user_id', '=', 'users.user_id')
+          .join({ fu: 'users' }, 'fu.user_id', '=', 'f.fav_user_id')
+          .where('users.username', user);
+      })
+      .then(favUsers => {
+        return getResultsOfUsers(favUsers, searchInput, clientResponse);
+      })
+      .then(favUserCodeArr => {
+        favUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        prevClientResponseLength = clientResponse.length;
+        const currentUsernames = clientResponse.reduce((acc, user) => {
+          if (acc.indexOf(user.username) === -1) {
+            acc.push(user.username);
+          }
+          return acc;
+        }, []);
+        return knex('users')
+          .select('username')
+          .whereNotIn('username', currentUsernames)
+          .orderBy('fu.num_of_followers', 'desc')
+          .limit(50);
+      })
+      .then(miscUsernames => {
+        return getResultsOfUsers(miscUsernames, searchInput, clientResponse);
+      })
+      .then(miscUserCodeArr => {
+        miscUserCodeArr.forEach((code, index) => {
+          clientResponse[index + prevClientResponseLength].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   } else {
-    addWhere(
-      linkCodeToMiscUsers([]).where(q =>
-        q.whereNot('dir_and_files.dir_file_name', 'like', '%.md')
-      ),
-      searchInput,
-      searchInput.length - 1
-    )
-      .orderBy('users.num_of_followers', 'desc')
-      .limit(numOfResults)
-      .then(data => {
-        res.json(data);
+    knex('users')
+      .select('username')
+      .orderBy('num_of_followers', 'desc')
+      .limit(50)
+      .then(users => {
+        return getResultsOfUsers(users, searchInput, clientResponse);
+      })
+      .then(codeArray => {
+        codeArray.forEach((code, index) => {
+          clientResponse[index].file_code = code;
+        });
+        res.json(clientResponse);
+      })
+      .catch(err => {
+        res.send('could not get search data');
       });
   }
 });

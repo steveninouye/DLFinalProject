@@ -5,8 +5,10 @@ const request = require('request');
 const rp = require('request-promise');
 const keys = require('./config/keys');
 
-const clientId = process.env.GITHUB_CLIENT_ID;
-const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+const clientId = process.env.GITHUB_CLIENT_ID || 'b4835d3d7e23771765a8';
+const clientSecret =
+  process.env.GITHUB_CLIENT_SECRET ||
+  '6e39a862e59d57249cff7a9928a694d3945a9c97';
 
 passport.serializeUser((user, done) => {
   done(null, user);
