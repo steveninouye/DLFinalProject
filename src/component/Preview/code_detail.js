@@ -36,29 +36,35 @@ class CodeDetail extends Component {
     const rightArrowIndex = index === this.lastIndex() ? 0 : index + 1;
     const file = this.getFile();
     return (
-      <div className="row">
-        <div className="col">
-          <Link to={`/preview/code/${leftArrowIndex}`}>
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7f8nJGsWa-zdYBFVnDsCr9vBjgJG6-ZaLX7asxVaEcN1ozBUR"
-              alt="leftArrow"
-            />
-          </Link>
+      <div className="previewCode">
+        <div className="leftArrowDiv">
+          <Link to={`/preview/code/${leftArrowIndex}`}>{'<'}</Link>
         </div>
-        <div className="col-11">
-          <h2>{file.file_name}</h2>
-          <h3>{file.file_author}</h3>
+        <div className="codePreview">
+          <div className="codePreviewHeader">
+            <div className="fileInfo">
+              <div className="fileName">{file.file_name}</div>
+              <p>
+                <span className="pathRepo">{file.repository}</span>/{
+                  file.file_path
+                }
+              </p>
+              <a href={`${file.user_github_url}/${file.repository}`}>
+                GitHub Repo
+              </a>&nbsp;&nbsp;&nbsp;&nbsp;
+              <a href={`${file.file_html_url}`}>GitHub File</a>
+            </div>
+            <div className="userAvatar">
+              <span className="userName">{file.username}</span>
+              <img src={file.avatar} alt="avatar" className="avatar" />
+            </div>
+          </div>
           <pre style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
             {this.getCodeOfFile()}
           </pre>
         </div>
-        <div className="col">
-          <Link to={`/preview/code/${rightArrowIndex}`}>
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgyLIJ8S0y2E04HgekZAmw9QNGpno7RzxTMmTVRQYmncbPkaJNaA"
-              alt="rightArrow"
-            />
-          </Link>
+        <div className="rightArrowDiv">
+          <Link to={`/preview/code/${rightArrowIndex}`}>{'>'}</Link>
         </div>
       </div>
     );

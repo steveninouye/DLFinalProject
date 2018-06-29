@@ -20,13 +20,11 @@ const Code = ({ file, history, index, file_code }) => {
               history.push(`/preview/code/${index}`);
             }}
           >
-            <img className="userAvatar" src={avatar} alt={username} />
+            <img className="searchUserAvatar" src={avatar} alt={username} />
             <div className="codeMiddleColumn">
-              <span className="fileName">{file_name}</span>
-              <br />
-              <span className="author">By: {username}</span>
-              <br />
-              <span className="repository">repository: {repository}</span>
+              <div className="searchFileName">{file_name}</div>
+              <div className="author">By: {username}</div>
+              <div className="repository">repository: {repository}</div>
             </div>
           </div>
           <div className="leftBottomDiv">

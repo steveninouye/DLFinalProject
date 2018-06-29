@@ -12,7 +12,7 @@ class Search extends Component {
   render() {
     return (
       <div>
-        <SearchHeader />
+        <SearchHeader history={this.props.history} />
         <div className="container-fluid">
           <div className="row">
             <RefineSearch />

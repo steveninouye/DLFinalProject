@@ -7,6 +7,7 @@ import { searchedInput } from '../../action/action_searched_input';
 import { parseInput } from '../../action/action_parse_input';
 import { getVideoResults } from '../../action/action_get_video_results';
 import { getForumResults } from '../../action/action_get_forum_results';
+import { clearResults } from '../../action/action_clear_results';
 
 class SearchHeader extends Component {
   constructor(props) {
@@ -23,6 +24,7 @@ class SearchHeader extends Component {
   }
 
   onFormSubmit(event) {
+    this.props.clearResults();
     const input = this.state.searchInput.trim();
     event.preventDefault();
     this.props.searchedInput(input);
@@ -68,7 +70,8 @@ function mapDispatchToProps(dispatch) {
       searchedInput,
       parseInput,
       getVideoResults,
-      getForumResults
+      getForumResults,
+      clearResults
     },
     dispatch
   );

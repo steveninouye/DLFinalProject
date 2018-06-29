@@ -13,26 +13,26 @@ class SearchList extends Component {
       <Tabs className="searchTabs">
         <TabList className="tabbyList">
           <Tab className="tabby" selectedClassName="selectedTab">
-            Video
-          </Tab>
-          <Tab className="tabby" selectedClassName="selectedTab">
             Code
           </Tab>
           <Tab className="tabby" selectedClassName="selectedTab">
             Docs
           </Tab>
           <Tab className="tabby" selectedClassName="selectedTab">
+            Video
+          </Tab>
+          <Tab className="tabby" selectedClassName="selectedTab">
             Forum
           </Tab>
         </TabList>
-        <TabPanel selectedClassName="tabVideoPanel">
-          <SearchVideo history={this.props.history} />
-        </TabPanel>
         <TabPanel selectedClassName="tabPanel">
           <SearchCode history={this.props.history} />
         </TabPanel>
         <TabPanel selectedClassName="tabPanel">
           <SearchDoc history={this.props.history} />
+        </TabPanel>
+        <TabPanel selectedClassName="tabVideoPanel">
+          <SearchVideo history={this.props.history} />
         </TabPanel>
         <TabPanel selectedClassName="tabPanel">
           <SearchForum history={this.props.history} />

@@ -5,9 +5,8 @@ const reqProm = require('request-promise');
 let gitHubReqObj = {
   uri: `https://api.github.com/search/code?`,
   qs: {
-    page: 1,
-    client_id: 'b4835d3d7e23771765a8',
-    client_secret: '6e39a862e59d57249cff7a9928a694d3945a9c97'
+    client_id: process.env.GITHUB_CLIENT_ID,
+    client_secret: process.env.GITHUB_CLIENT_SECRET
   },
   headers: {
     'User-Agent': 'steveninouye'
@@ -67,7 +66,7 @@ router.post('/db/search', (req, res) => {
         delete rawReqObj.json;
         promiseArr.push(reqProm(rawReqObj));
       });
-      return Promise.all(promiseArr);
+      return Promise.all(promiseArr.map(prom => prom.catch(err => err)));
     });
   };
   ///////////////////////////////////////////////////////////
@@ -80,8 +79,11 @@ router.post('/db/search', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         return knex('users')
           .select('fu.username')
@@ -94,8 +96,11 @@ router.post('/db/search', (req, res) => {
       })
       .then(favUserCodeArr => {
         favUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         const currentUsernames = clientResponse.reduce((acc, user) => {
           if (acc.indexOf(user.username) === -1) {
@@ -105,8 +110,8 @@ router.post('/db/search', (req, res) => {
         }, []);
         return knex('users')
           .select('username')
-          .whereNotIn('username', currentUsernames)
-          .orderBy('fu.num_of_followers', 'desc')
+          .whereNotIn('users.username', currentUsernames)
+          .orderBy('users.num_of_followers', 'desc')
           .limit(50);
       })
       .then(miscUsernames => {
@@ -114,11 +119,15 @@ router.post('/db/search', (req, res) => {
       })
       .then(miscUserCodeArr => {
         miscUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
+        console.log(err);
         res.send('could not get search data');
       });
   } else {
@@ -131,11 +140,15 @@ router.post('/db/search', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
+        // console.log(err);
         res.send('could not get search data');
       });
   }
@@ -193,7 +206,7 @@ router.post('/lib/file', (req, res) => {
         delete rawReqObj.json;
         promiseArr.push(reqProm(rawReqObj));
       });
-      return Promise.all(promiseArr);
+      return Promise.all(promiseArr.map(prom => prom.catch(err => err)));
     });
   };
   ///////////////////////////////////////////////////////////
@@ -206,8 +219,11 @@ router.post('/lib/file', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         return knex('users')
           .select('fu.username')
@@ -220,8 +236,11 @@ router.post('/lib/file', (req, res) => {
       })
       .then(favUserCodeArr => {
         favUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         const currentUsernames = clientResponse.reduce((acc, user) => {
           if (acc.indexOf(user.username) === -1) {
@@ -240,8 +259,11 @@ router.post('/lib/file', (req, res) => {
       })
       .then(miscUserCodeArr => {
         miscUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
@@ -257,8 +279,11 @@ router.post('/lib/file', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
@@ -319,7 +344,7 @@ router.post('/lib/repo', (req, res) => {
         delete rawReqObj.json;
         promiseArr.push(reqProm(rawReqObj));
       });
-      return Promise.all(promiseArr);
+      return Promise.all(promiseArr.map(prom => prom.catch(err => err)));
     });
   };
   ///////////////////////////////////////////////////////////
@@ -332,8 +357,11 @@ router.post('/lib/repo', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         return knex('users')
           .select('fu.username')
@@ -346,8 +374,11 @@ router.post('/lib/repo', (req, res) => {
       })
       .then(favUserCodeArr => {
         favUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         const currentUsernames = clientResponse.reduce((acc, user) => {
           if (acc.indexOf(user.username) === -1) {
@@ -366,8 +397,11 @@ router.post('/lib/repo', (req, res) => {
       })
       .then(miscUserCodeArr => {
         miscUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
@@ -383,8 +417,11 @@ router.post('/lib/repo', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
@@ -445,7 +482,7 @@ router.post('/lib', (req, res) => {
         delete rawReqObj.json;
         promiseArr.push(reqProm(rawReqObj));
       });
-      return Promise.all(promiseArr);
+      return Promise.all(promiseArr.map(prom => prom.catch(err => err)));
     });
   };
   ///////////////////////////////////////////////////////////
@@ -458,8 +495,11 @@ router.post('/lib', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         return knex('users')
           .select('fu.username')
@@ -472,8 +512,11 @@ router.post('/lib', (req, res) => {
       })
       .then(favUserCodeArr => {
         favUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         prevClientResponseLength = clientResponse.length;
         const currentUsernames = clientResponse.reduce((acc, user) => {
           if (acc.indexOf(user.username) === -1) {
@@ -492,8 +535,11 @@ router.post('/lib', (req, res) => {
       })
       .then(miscUserCodeArr => {
         miscUserCodeArr.forEach((code, index) => {
-          clientResponse[index + prevClientResponseLength].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {
@@ -509,8 +555,11 @@ router.post('/lib', (req, res) => {
       })
       .then(codeArray => {
         codeArray.forEach((code, index) => {
-          clientResponse[index].file_code = code;
+          if (!code.error) {
+            clientResponse[index].file_code = code;
+          }
         });
+        clientResponse = clientResponse.filter(e => e.file_code);
         res.json(clientResponse);
       })
       .catch(err => {

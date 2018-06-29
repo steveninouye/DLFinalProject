@@ -26,3 +26,65 @@ iframe {
 .videoSlider > img {
   border: 5px solid #0069d9;
 }
+
+.previewCode {
+  padding-top: 15px;
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.leftArrowDiv > a,
+.rightArrowDiv > a {
+  font-size: 6rem;
+  font-weight: 1000;
+}
+.leftArrowDiv,
+.rightArrowDiv {
+  margin: 8px;
+}
+
+.codePreview {
+  padding-left: 15px;
+  flex: 22;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 800px;
+}
+
+.codePreviewHeader {
+  display: flex;
+  justify-content: space-between;
+}
+
+.fileName {
+  font-size: 4rem;
+  font-weight: 700;
+}
+
+.userAvatar {
+  padding-top: 20px;
+  display: flex;
+  margin-right: 80px;
+}
+
+.userName {
+  font-size: 2rem;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  margin-left: 15px;
+}
+
+.pathRepo {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+pre {
+  padding: 10px;
+  border: 1px solid gray;
+}

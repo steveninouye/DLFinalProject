@@ -134,7 +134,7 @@ pre {
   cursor: grabbing;
 }
 
-.userAvatar {
+.searchUserAvatar {
   width: 10rem;
   height: 10rem;
 }
@@ -145,7 +145,7 @@ pre {
   height: 100%;
 }
 
-.fileName {
+.searchFileName {
   font-size: 3rem;
   font-weight: 550;
 }

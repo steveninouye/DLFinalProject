@@ -58,12 +58,10 @@ class VideoDetail extends Component {
               alt={results[videoThree].snippet.title}
             />
           </Link>
-
           <img
             src={results[videoFour].snippet.thumbnails.medium.url}
             alt={results[videoFour].snippet.title}
           />
-
           <Link to={`/preview/video/${videoFive}`}>
             <img
               src={results[videoFive].snippet.thumbnails.medium.url}

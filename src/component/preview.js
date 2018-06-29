@@ -11,7 +11,7 @@ class Preview extends Component {
     const { match } = this.props;
     return (
       <div>
-        <SearchHeader />
+        <SearchHeader history={this.props.history} />
         <Route
           path={`${match.url}/code/:index`}
           history={this.props.history}

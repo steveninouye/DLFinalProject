@@ -9,6 +9,7 @@ import './index.css';
 
 import reducers from './reducer';
 import Home from './component/home';
+import Shop from './component/shop';
 import Search from './component/search';
 import Preview from './component/preview';
 import NotFound from './component/not-found';
@@ -21,6 +22,7 @@ ReactDOM.render(
     <BrowserRouter>
       <div>
         <Switch>
+          <Route path="/shop" component={Shop} />
           <Route path="/preview" component={Preview} />
           <Route path="/search" component={Search} />
           <Route path="/" exact component={Home} />
