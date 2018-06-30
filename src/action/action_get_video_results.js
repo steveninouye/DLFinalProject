@@ -5,7 +5,7 @@ export function getVideoResults(input) {
   input = input.split('--lib').join('');
   input = input.split('-repo').join('');
   input = input.split('-file').join('');
-  const YOUTUBE_KEY = process.env.YOUTUBE_KEY || apiKey;
+  const YOUTUBE_KEY = process.env.REACT_APP_YOUTUBE_KEY;
   const urlSearchQuery = input.replace(/\s/g, '+') + '+js+javascript';
   return dispatch => {
     axios

@@ -1,11 +1,10 @@
 import axios from 'axios';
-import apiKey from '../keys/StackAppKey';
 
 export function getForumResults(input) {
   input = input.split('--lib').join('');
   input = input.split('-repo').join('');
   input = input.split('-file').join('');
-  const STACK_APP_KEY = process.env.STACK_APP_KEY || apiKey;
+  const STACK_APP_KEY = process.env.REACT_APP_STACK_APP_KEY;
   const urlSearchQuery = input.replace(/\s/g, '%20');
   return dispatch => {
     axios
