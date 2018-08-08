@@ -10,11 +10,7 @@ const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
 passport.serializeUser((user, done) => {
   console.log('Serialize: ', user);
-<<<<<<< HEAD
   done(null, user.username);
-=======
-  done(null, { username: 'steveninouye' });
->>>>>>> 11f70647983b573756af95cba9f5789d900d11e7
 });
 
 passport.deserializeUser((user, done) => {
