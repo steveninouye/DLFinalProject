@@ -19,7 +19,7 @@ db.sql
 # knexfile.js
 /scraper-functions
 # /config
-/src/keys
+# /src/keys
 
 npm-debug.log*
 yarn-debug.log*
