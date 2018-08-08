@@ -5,7 +5,7 @@ module.exports = {
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET
   },
   session: {
-    COOKIE_KEY: process.env.COOKIE_KEY
+    COOKIE_KEY: 'secret'
   },
   db: {
     DB_USER: process.env.DB_USER,

@@ -9,10 +9,12 @@ const clientId = process.env.GITHUB_CLIENT_ID;
 const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
 passport.serializeUser((user, done) => {
+  console.log('Serialize: ', user);
   done(null, user);
 });
 
 passport.deserializeUser((user, done) => {
+  console.log('Deserialize: ', user);
   done(null, user);
 });
 
@@ -38,6 +40,7 @@ passport.use(
       // check if user already exists in our own db
       // already have this user
       // console.log('user is: ', profile);
+      console.log('THIS IS RUNNING!!!');
       knex('users')
         .select()
         .where('username', username)

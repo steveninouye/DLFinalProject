@@ -35,8 +35,10 @@ router.get(
 );
 
 router.get('/check', (req, res) => {
+  console.log('user user user');
+  console.log(req.user);
   if (req.user) {
-    res.json(req.user);
+    res.json(req.session);
   } else {
     res.json({});
   }
